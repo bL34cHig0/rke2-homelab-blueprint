@@ -75,7 +75,9 @@ If you prefer to **group cluster services under a dedicated subdomain** (`<servi
 
 ## Pod Security Baseline
 
-`infrastructure/security/k8s-deployment-security-policy.md` defines the mandatory baseline every workload must meet before being admitted to production — non-root UIDs, read-only root filesystems, dropped Linux capabilities, dedicated service accounts with `automountServiceAccountToken: false`, network-policy microsegmentation, image-registry allowlisting, and the rate-limit / `X-Forwarded-For` posture for Cloudflare-fronted traffic.
+[`infrastructure/security/k8s-deployment-security-policy.md`](infrastructure/security/k8s-deployment-security-policy.md) collects the workload hardening practices this blueprint follows by default — non-root UIDs, read-only root filesystems, dropped Linux capabilities, dedicated service accounts with `automountServiceAccountToken: false`, network-policy microsegmentation, image-registry allowlisting, and the rate-limit / `X-Forwarded-For` posture for Cloudflare-fronted traffic.
+
+Treat these as a recommended baseline rather than hard requirements. Each control exists for a stated reason in the doc, so you can make an informed call about which ones fit your threat model, which ones to tune, and which ones to relax. The defaults aim for "production-ready out of the box," but a homelab on a private network will reasonably need fewer controls than an internet-facing production cluster.
 
 ## Suitable Hosting Environments
 
