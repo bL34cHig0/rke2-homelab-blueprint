@@ -1,0 +1,216 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress
+  namespace: wordpress
+  labels:
+    app: wordpress
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: wordpress
+  template:
+    metadata:
+      labels:
+        app: wordpress
+    spec:
+      serviceAccountName: wordpress-service-account
+      automountServiceAccountToken: false
+
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: wordpress
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 33
+        runAsGroup: 33
+        fsGroup: 33
+        fsGroupChangePolicy: "OnRootMismatch"
+        seccompProfile:
+          type: RuntimeDefault
+
+      initContainers:
+      - name: fix-permissions
+        image: busybox:1.36
+        command:
+          - sh
+          - -c
+          - |
+            chown -R 33:33 /var/www/html/wp-content
+            chmod -R 775 /var/www/html/wp-content
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
+          privileged: false
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - CHOWN
+              - FOWNER
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+        volumeMounts:
+        - name: wp-content
+          mountPath: /var/www/html/wp-content
+
+      containers:
+      - name: wordpress
+        image: wordpress:6.9.1-php8.5-apache
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - containerPort: 80
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          privileged: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - NET_BIND_SERVICE
+
+        env:
+        - name: WORDPRESS_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mariadb
+              key: username
+        - name: WORDPRESS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb
+              key: password
+        - name: WORDPRESS_DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: mariadb-config
+              key: database.url
+        - name: WORDPRESS_CONFIG_EXTRA
+          valueFrom:
+            configMapKeyRef:
+              name: wordpress-config-extra
+              key: config-extra.php
+        - name: WORDPRESS_AUTH_KEY
+          valueFrom:
+            secretKeyRef:
+              name: wordpress-auth
+              key: AUTH_KEY
+        - name: WORDPRESS_SECURE_AUTH_KEY
+          valueFrom:
+            secretKeyRef:
+              name: wordpress-auth
+              key: SECURE_AUTH_KEY
+        - name: WORDPRESS_LOGGED_IN_KEY
+          valueFrom:
+            secretKeyRef:
+              name: wordpress-auth
+              key: LOGGED_IN_KEY
+        - name: WORDPRESS_NONCE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: wordpress-auth
+              key: NONCE_KEY
+        - name: WORDPRESS_AUTH_SALT
+          valueFrom:
+            secretKeyRef:
+              name: wordpress-auth
+              key: AUTH_SALT
+        - name: WORDPRESS_SECURE_AUTH_SALT
+          valueFrom:
+            secretKeyRef:
+              name: wordpress-auth
+              key: SECURE_AUTH_SALT
+        - name: WORDPRESS_LOGGED_IN_SALT
+          valueFrom:
+            secretKeyRef:
+              name: wordpress-auth
+              key: LOGGED_IN_SALT
+        - name: WORDPRESS_NONCE_SALT
+          valueFrom:
+            secretKeyRef:
+              name: wordpress-auth
+              key: NONCE_SALT
+
+        startupProbe:
+          httpGet:
+            path: /wp-login.php
+            port: 80
+          failureThreshold: 30
+          periodSeconds: 10
+
+        livenessProbe:
+          httpGet:
+            path: /wp-login.php
+            port: 80
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /wp-login.php
+            port: 80
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 250m
+            memory: 512Mi
+
+        volumeMounts:
+        - name: wp-html
+          mountPath: /var/www/html
+        - name: wp-content
+          mountPath: /var/www/html/wp-content
+        - name: apache-run
+          mountPath: /var/run/apache2
+        - name: apache-lock
+          mountPath: /var/lock/apache2
+        - name: tmp
+          mountPath: /tmp
+        - name: apache-config
+          mountPath: /etc/apache2/conf-available/hide-versions.conf
+          subPath: hide-versions.conf
+        - name: php-config
+          mountPath: /usr/local/etc/php/conf.d/custom-php.ini
+          subPath: custom-php.ini
+
+      volumes:
+      - name: wp-html
+        emptyDir:
+          sizeLimit: 256Mi
+      - name: wp-content
+        persistentVolumeClaim:
+          claimName: wordpress-content-pvc
+      - name: apache-run
+        emptyDir: {}
+      - name: apache-lock
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}
+      - name: apache-config
+        configMap:
+          name: wordpress-apache-config
+      - name: php-config
+        configMap:
+          name: wordpress-php-config

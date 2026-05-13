@@ -1,0 +1,46 @@
+# TEMPLATE — DO NOT apply this file directly.
+#
+# This file is a reference / starting point for the two middlewares every workload
+# under cluster-apps/ tends to need: a security-headers Middleware and a
+# per-source-IP rate limit. It is NOT meant to be applied as-is into the cluster.
+#
+# To use it: copy this file into your workload's directory, set `namespace:` to your
+# workload's namespace (Middlewares are namespace-scoped — IngressRoutes can only
+# reference Middlewares in the same namespace by bare name), tune `average`/`burst`
+# to fit the workload's traffic profile, and add or remove headers to match the
+# workload's requirements.
+#
+# See cluster-apps/wordpress/default-headers.yaml and cluster-apps/rancher/default-headers.yaml
+# for two concrete copies that diverge in small ways from this template.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: default-headers
+  namespace: <your-namespace>
+spec:
+  headers:
+    browserXssFilter: true
+    contentTypeNosniff: true
+    forceSTSHeader: true
+    stsIncludeSubdomains: true
+    stsPreload: true
+    stsSeconds: 31536000
+    customFrameOptionsValue: SAMEORIGIN
+    customRequestHeaders:
+      X-Forwarded-Proto: https
+    customResponseHeaders:
+      Referrer-Policy: "strict-origin-when-cross-origin"
+      X-Permitted-Cross-Domain-Policies: "none"
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: ratelimit
+  namespace: <your-namespace>
+spec:
+  rateLimit:
+    average: 20   # average requests per second — tune per workload
+    burst: 40     # maximum burst — tune per workload
+    period: 1m
+    sourceCriterion:
+      requestHost: false

@@ -1,0 +1,105 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: wordpress
+  namespace: wordpress
+  annotations:
+    kubernetes.io/ingress.class: traefik-external
+spec:
+  entryPoints:
+    - websecure
+  routes:
+
+    - match: Host(`<your-domain>`) && PathPrefix(`/wp-admin/install.php`)
+      kind: Rule
+      priority: 100
+      middlewares:
+        - name: deny-endpoints
+      services:
+        - name: wordpress
+          port: 80
+
+    - match: Host(`www.<your-domain>`) && PathPrefix(`/wp-admin/install.php`)
+      kind: Rule
+      priority: 100
+      middlewares:
+        - name: deny-endpoints
+      services:
+        - name: wordpress
+          port: 80
+
+    - match: Host(`<your-domain>`) && PathPrefix(`/xmlrpc.php`)
+      kind: Rule
+      priority: 100
+      middlewares:
+        - name: deny-endpoints
+      services:
+        - name: wordpress
+          port: 80
+
+    - match: Host(`www.<your-domain>`) && PathPrefix(`/xmlrpc.php`)
+      kind: Rule
+      priority: 100
+      middlewares:
+        - name: deny-endpoints
+      services:
+        - name: wordpress
+          port: 80
+
+    - match: Host(`<your-domain>`) && PathPrefix(`/wp-json/wp/v2/users`)
+      kind: Rule
+      priority: 100
+      middlewares:
+        - name: deny-endpoints
+      services:
+        - name: wordpress
+          port: 80
+
+    - match: Host(`www.<your-domain>`) && PathPrefix(`/wp-json/wp/v2/users`)
+      kind: Rule
+      priority: 100
+      middlewares:
+        - name: deny-endpoints
+      services:
+        - name: wordpress
+          port: 80
+
+    - match: Host(`<your-domain>`) && PathPrefix(`/wp-login.php`)
+      kind: Rule
+      priority: 50
+      middlewares:
+        - name: ratelimit
+        - name: default-headers
+      services:
+        - name: wordpress
+          port: 80
+
+    - match: Host(`www.<your-domain>`) && PathPrefix(`/wp-login.php`)
+      kind: Rule
+      priority: 50
+      middlewares:
+        - name: ratelimit
+        - name: default-headers
+      services:
+        - name: wordpress
+          port: 80
+
+    - match: Host(`<your-domain>`)
+      kind: Rule
+      priority: 1
+      middlewares:
+        - name: default-headers
+      services:
+        - name: wordpress
+          port: 80
+
+    - match: Host(`www.<your-domain>`)
+      kind: Rule
+      priority: 1
+      middlewares:
+        - name: default-headers
+      services:
+        - name: wordpress
+          port: 80
+  tls:
+    secretName: default-cert-production-tls

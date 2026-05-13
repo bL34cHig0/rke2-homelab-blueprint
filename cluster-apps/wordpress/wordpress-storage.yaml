@@ -1,0 +1,20 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: wordpress
+provisioner: driver.longhorn.io
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+allowVolumeExpansion: true
+parameters:
+  numberOfReplicas: "2"
+  replicaAutoBalance: "least-effort"
+  staleReplicaTimeout: "30"
+  fsType: ext4
+  encrypted: "true"
+  csi.storage.k8s.io/provisioner-secret-name: "longhorn-crypto"
+  csi.storage.k8s.io/provisioner-secret-namespace: "longhorn-system"
+  csi.storage.k8s.io/node-publish-secret-name: "longhorn-crypto"
+  csi.storage.k8s.io/node-publish-secret-namespace: "longhorn-system"
+  csi.storage.k8s.io/node-stage-secret-name: "longhorn-crypto"
+  csi.storage.k8s.io/node-stage-secret-namespace: "longhorn-system"

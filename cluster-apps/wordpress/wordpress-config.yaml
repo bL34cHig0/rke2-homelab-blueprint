@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wordpress-apache-config
+  namespace: wordpress
+data:
+  hide-versions.conf: |
+    ServerTokens Prod
+    ServerSignature Off
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wordpress-php-config
+  namespace: wordpress
+data:
+  custom-php.ini: |
+    expose_php = Off
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wordpress-config-extra
+  namespace: wordpress
+data:
+  config-extra.php: |
+    if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
+        $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+        $_SERVER['HTTPS'] = 'on';
+    }
+
+    define('WP_HOME', 'https://<your-domain>');
+    define('WP_SITEURL', 'https://<your-domain>');

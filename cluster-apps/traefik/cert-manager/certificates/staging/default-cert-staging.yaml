@@ -1,0 +1,16 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: default-cert-staging
+  namespace: traefik
+spec:
+  secretName: default-cert-staging-tls # reference this name in the ingress manifest when testing in staging
+  issuerRef:
+    name: letsencrypt-staging
+    kind: ClusterIssuer
+  commonName: "*.<your-domain>"
+  dnsNames:
+  - "<your-domain>"
+  - "*.<your-domain>"
+  privateKey:
+    rotationPolicy: Always

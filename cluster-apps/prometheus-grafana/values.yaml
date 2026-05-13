@@ -1,0 +1,393 @@
+fullnameOverride: "prometheus"
+
+defaultRules:
+  create: true
+  rules:
+    alertmanager: true
+    etcd: true
+    configReloaders: true
+    general: true
+    k8s: true
+    k8sContainerCpuUsageSecondsTotal: true
+    k8sContainerMemoryCache: true
+    k8sContainerMemoryRss: true
+    k8sContainerMemorySwap: true
+    k8sContainerResource: true
+    k8sContainerMemoryWorkingSetBytes: true
+    k8sPodOwner: true
+    kubeApiserverAvailability: true
+    kubeApiserverBurnrate: true
+    kubeApiserverHistogram: true
+    kubeApiserverSlos: true
+    kubeControllerManager: false
+    kubelet: true
+    kubeProxy: false
+    kubePrometheusGeneral: true
+    kubePrometheusNodeRecording: true
+    kubernetesApps: true
+    kubernetesResources: true
+    kubernetesStorage: true
+    kubernetesSystem: true
+    kubeSchedulerAlerting: false
+    kubeSchedulerRecording: false
+    kubeStateMetrics: true
+    network: true
+    node: true
+    nodeExporterAlerting: true
+    nodeExporterRecording: true
+    prometheus: true
+    prometheusOperator: true
+    windows: true
+
+alertmanager:
+  fullnameOverride: alertmanager
+  enabled: true
+  ingress:
+    enabled: false
+  serviceAccount:
+    automountServiceAccountToken: false
+  alertmanagerSpec:
+    automountServiceAccountToken: false
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 65534
+      runAsGroup: 65534
+      fsGroup: 65534
+      seccompProfile:
+        type: RuntimeDefault
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      privileged: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 250m
+      limits:
+        memory: 512Mi
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: monitoring
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 1Gi
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      receiver: "discord-default"
+      group_by: ["alertname", "namespace", "job"]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 2h
+      routes:
+        # Silence Watchdog, InfoInhibitor, and all info-level alerts
+        - receiver: "null"
+          matchers:
+            - alertname =~ "Watchdog|InfoInhibitor"
+          continue: false
+        - receiver: "null"
+          matchers:
+            - severity = info
+          continue: false
+        # Critical alerts -> dedicated critical channel
+        - receiver: "discord-critical"
+          matchers:
+            - severity = critical
+          continue: false
+        # Warning-level alerts -> general warnings channel
+        - receiver: "discord-warning"
+          matchers:
+            - severity = warning
+          continue: false
+    inhibit_rules:
+      # If a critical alert fires, suppress the matching warning
+      - source_matchers:
+          - severity = critical
+        target_matchers:
+          - severity = warning
+        equal: ["alertname", "namespace"]
+      # InfoInhibitor suppresses info-level alerts in the same namespace
+      - source_matchers:
+          - alertname = InfoInhibitor
+        target_matchers:
+          - severity = info
+        equal: ["namespace"]
+    receivers:
+      - name: "null"
+      - name: "discord-default"
+        webhook_configs:
+          - url: "http://alertmanager-discord-default.monitoring.svc.cluster.local:9094"
+            send_resolved: true
+      - name: "discord-critical"
+        webhook_configs:
+          - url: "http://alertmanager-discord-critical.monitoring.svc.cluster.local:9094"
+            send_resolved: true
+      - name: "discord-warning"
+        webhook_configs:
+          - url: "http://alertmanager-discord-warning.monitoring.svc.cluster.local:9094"
+            send_resolved: true
+
+grafana:
+  enabled: true
+  fullnameOverride: grafana
+  serviceAccount:
+    autoMount: true # required — sidecar watches ConfigMaps for dashboard provisioning
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 472
+    runAsGroup: 472
+    fsGroup: 472
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    privileged: false
+    capabilities:
+      drop:
+        - ALL
+    # readOnlyRootFilesystem omitted — Grafana sidecar and plugins require writes to /tmp and /var/lib/grafana
+  extraVolumeMounts:
+    - name: tmp
+      mountPath: /tmp
+  extraVolumes:
+    - name: tmp
+      emptyDir: {}
+  persistence:
+    enabled: true
+    storageClassName: monitoring
+    size: 1Gi
+  forceDeployDatasources: false
+  forceDeployDashboards: false
+  defaultDashboards: true
+  serviceMonitor:
+    enabled: true
+  admin:
+    existingSecret: grafana-admin-credentials
+    userKey: admin-user
+    passwordKey: admin-password
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 500m
+    limits:
+      memory: 512Mi
+
+kubeApiServer:
+  enabled: true
+
+kubelet:
+  enabled: true
+  serviceMonitor:
+    metricRelabelings:
+      - action: replace
+        sourceLabels:
+          - node
+        targetLabel: instance
+
+kubeControllerManager:
+  enabled: false # disabled — RKE2 binds to 127.0.0.1, unreachable by Prometheus
+
+coreDns:
+  enabled: true
+
+kubeDns:
+  enabled: false
+
+kubeEtcd:
+  enabled: true
+  endpoints:
+    - <control-plane-private-ip> # private IPs of control plane nodes
+    - <control-plane-private-ip>
+    - <control-plane-private-ip>
+  service:
+    enabled: true
+    port: 2381
+    targetPort: 2381
+
+kubeScheduler:
+  enabled: false # disabled — RKE2 binds to 127.0.0.1, unreachable by Prometheus
+
+kubeProxy:
+  enabled: false # disabled — RKE2 binds to 127.0.0.1, unreachable by Prometheus
+
+kubeStateMetrics:
+  enabled: true
+
+kube-state-metrics:
+  fullnameOverride: kube-state-metrics
+  serviceAccount:
+    automountServiceAccountToken: true # required — queries K8s API for cluster state metrics
+  securityContext:
+    enabled: true
+    runAsNonRoot: true
+    runAsUser: 65534
+    runAsGroup: 65534
+    fsGroup: 65534
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+  selfMonitor:
+    enabled: true
+  prometheus:
+    monitor:
+      enabled: true
+      relabelings:
+        - action: replace
+          regex: (.*)
+          replacement: $1
+          sourceLabels:
+            - __meta_kubernetes_pod_node_name
+          targetLabel: kubernetes_node
+
+nodeExporter:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    relabelings:
+      - action: replace
+        regex: (.*)
+        replacement: $1
+        sourceLabels:
+          - __meta_kubernetes_pod_node_name
+        targetLabel: kubernetes_node
+
+prometheus-node-exporter:
+  fullnameOverride: "node-exporter"
+  serviceAccount:
+    automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    runAsGroup: 65534
+    fsGroup: 65534
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+  podLabels:
+    jobLabel: node-exporter
+  extraArgs:
+    - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run/containerd/.+|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
+    - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs|erofs)$
+  service:
+    portName: http-metrics
+  prometheus:
+    monitor:
+      enabled: true
+      relabelings:
+        - action: replace
+          regex: (.*)
+          replacement: $1
+          sourceLabels:
+            - __meta_kubernetes_pod_node_name
+          targetLabel: kubernetes_node
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 500m
+    limits:
+      memory: 512Mi
+
+prometheusOperator:
+  enabled: true
+  serviceAccount:
+    automountServiceAccountToken: true # required — manages CRDs (ServiceMonitor, PrometheusRule, etc.)
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    runAsGroup: 65534
+    fsGroup: 65534
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    privileged: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+  prometheusConfigReloader:
+    resources:
+      requests:
+        cpu: 200m
+        memory: 100Mi
+      limits:
+        memory: 100Mi
+
+prometheus:
+  enabled: true
+  serviceAccount:
+    automountServiceAccountToken: true # required — service discovery and scraping targets via K8s API
+  prometheusSpec:
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 65534
+      runAsGroup: 65534
+      fsGroup: 65534
+      seccompProfile:
+        type: RuntimeDefault
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      privileged: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
+    replicas: 1
+    retention: 3d
+    retentionSize: "4GiB" # Unit format should be in the form of "50GiB"
+    replicasExternalLabelName: "replica"
+    ruleSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: monitoring
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+    enableAdminAPI: false
+    walCompression: true
+    resources:
+      requests:
+        memory: 800Mi
+        cpu: 400m
+      limits:
+        memory: 800Mi
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: DoesNotExist
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/instance: prometheus-prometheus
+              topologyKey: kubernetes.io/hostname
+    tolerations:
+      - key: "node-role.kubernetes.io/control-plane"
+        operator: "Exists"
+        effect: "NoSchedule"

@@ -1,0 +1,26 @@
+# use this ingress manifest when testing in staging
+# to test the configuration with let's encrypt staging API
+# and to prevent being blocked due to rate limiting before
+# using production ingress manifest.
+
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik-dashboard
+  namespace: traefik
+  annotations:
+    kubernetes.io/ingress.class: traefik-external
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`traefik.<your-domain>`)
+      kind: Rule
+      middlewares:
+        - name: traefik-dashboard-basicauth
+        - name: strip-auth-header
+      services:
+        - name: api@internal
+          kind: TraefikService
+  tls:
+    secretName: default-cert-staging-tls # must match the secretname specified in staging certificate

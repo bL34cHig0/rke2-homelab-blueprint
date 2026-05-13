@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mariadb
+  namespace: wordpress
+spec:
+  podSelector:
+    matchLabels:
+      app: mariadb
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: wordpress
+      ports:
+        - protocol: TCP
+          port: 3306
+  egress:
+    # DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

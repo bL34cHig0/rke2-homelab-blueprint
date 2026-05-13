@@ -1,0 +1,263 @@
+---
+# ServiceAccount for alertmanager-discord adapters.
+# Dedicated SA avoids using the default service account.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: alertmanager-discord
+  namespace: monitoring
+  labels:
+    app: alertmanager-discord
+automountServiceAccountToken: false
+---
+# alertmanager-discord adapter: "default" channel
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager-discord-default
+  namespace: monitoring
+  labels:
+    app: alertmanager-discord
+    channel: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager-discord
+      channel: default
+  template:
+    metadata:
+      labels:
+        app: alertmanager-discord
+        channel: default
+    spec:
+      serviceAccountName: alertmanager-discord
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: alertmanager-discord
+          image: benjojo/alertmanager-discord:latest
+          ports:
+            - containerPort: 9094
+          env:
+            - name: DISCORD_WEBHOOK
+              valueFrom:
+                secretKeyRef:
+                  name: discord-webhook-default
+                  key: DISCORD_WEBHOOK
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 9094
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9094
+            initialDelaySeconds: 3
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager-discord-default
+  namespace: monitoring
+  labels:
+    app: alertmanager-discord
+    channel: default
+spec:
+  selector:
+    app: alertmanager-discord
+    channel: default
+  ports:
+    - port: 9094
+      targetPort: 9094
+      protocol: TCP
+---
+# alertmanager-discord adapter: "critical" channel
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager-discord-critical
+  namespace: monitoring
+  labels:
+    app: alertmanager-discord
+    channel: critical
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager-discord
+      channel: critical
+  template:
+    metadata:
+      labels:
+        app: alertmanager-discord
+        channel: critical
+    spec:
+      serviceAccountName: alertmanager-discord
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: alertmanager-discord
+          image: benjojo/alertmanager-discord:latest
+          ports:
+            - containerPort: 9094
+          env:
+            - name: DISCORD_WEBHOOK
+              valueFrom:
+                secretKeyRef:
+                  name: discord-webhook-critical
+                  key: DISCORD_WEBHOOK
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 9094
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9094
+            initialDelaySeconds: 3
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager-discord-critical
+  namespace: monitoring
+  labels:
+    app: alertmanager-discord
+    channel: critical
+spec:
+  selector:
+    app: alertmanager-discord
+    channel: critical
+  ports:
+    - port: 9094
+      targetPort: 9094
+      protocol: TCP
+---
+# alertmanager-discord adapter: "warning" channel
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager-discord-warning
+  namespace: monitoring
+  labels:
+    app: alertmanager-discord
+    channel: warning
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager-discord
+      channel: warning
+  template:
+    metadata:
+      labels:
+        app: alertmanager-discord
+        channel: warning
+    spec:
+      serviceAccountName: alertmanager-discord
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: alertmanager-discord
+          image: benjojo/alertmanager-discord:latest
+          ports:
+            - containerPort: 9094
+          env:
+            - name: DISCORD_WEBHOOK
+              valueFrom:
+                secretKeyRef:
+                  name: discord-webhook-warning
+                  key: DISCORD_WEBHOOK
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 9094
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9094
+            initialDelaySeconds: 3
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager-discord-warning
+  namespace: monitoring
+  labels:
+    app: alertmanager-discord
+    channel: warning
+spec:
+  selector:
+    app: alertmanager-discord
+    channel: warning
+  ports:
+    - port: 9094
+      targetPort: 9094
+      protocol: TCP

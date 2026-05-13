@@ -1,0 +1,92 @@
+logs:
+  access:
+    enabled: true
+
+image:
+  registry: docker.io
+  repository: traefik
+  tag: v3.6.7
+  pullPolicy: IfNotPresent
+
+additionalArguments:
+  - "--global.sendanonymoususage=false"
+  - "--global.checknewversion=false"
+  - "--serversTransport.insecureSkipVerify=true"
+  - "--log.level=INFO"
+  - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+  - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+  - "--entrypoints.websecure.http.encodedCharacters.allowEncodedSlash=false"
+  - "--entrypoints.websecure.http.encodedCharacters.allowEncodedBackSlash=false"
+  - "--entrypoints.websecure.http.encodedCharacters.allowEncodedNullCharacter=false"
+  - "--entrypoints.websecure.http.encodedCharacters.allowEncodedSemicolon=false"
+  - "--entrypoints.websecure.http.encodedCharacters.allowEncodedPercent=false"
+  - "--entrypoints.websecure.http.encodedCharacters.allowEncodedQuestionMark=false"
+  - "--entrypoints.websecure.http.encodedCharacters.allowEncodedHash=false"
+
+deployment:
+  enabled: true
+  replicas: 4 # set the replicas to number of nodes
+  podSpec:
+    podSecurityContext:
+      runAsGroup: 65532
+      runAsNonRoot: true
+      runAsUser: 65532
+      seccompProfile:
+        type: RuntimeDefault
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: "kubernetes.io/hostname"
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: traefik
+    tolerations:
+      - key: "node-role.kubernetes.io/control-plane"
+        operator: "Exists"
+        effect: "NoSchedule"
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        memory: 256Mi
+
+ports:
+  web:
+    port: 80
+    expose:
+      default: true
+  websecure:
+    port: 443
+    expose:
+      default: true
+
+ingressRoute:
+  dashboard:
+    enabled: false
+
+providers:
+  kubernetesCRD:
+    enabled: true
+    ingressClass: traefik-external
+  kubernetesIngress:
+    enabled: true
+    publishedService:
+      enabled: false
+
+rbac:
+  enabled: true
+
+service:
+  enabled: true
+  type: LoadBalancer
+  loadBalancerIP: <designated-ingress-node-public-ip>
+  externalTrafficPolicy: Local
+
+metrics:
+  prometheus:
+    enabled: true
+    entryPoint: metrics
+    addEntryPointsLabels: true
+    addRoutersLabels: true
+    addServicesLabels: true

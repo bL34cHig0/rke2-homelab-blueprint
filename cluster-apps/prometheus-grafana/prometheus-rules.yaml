@@ -1,0 +1,156 @@
+---
+# Custom PrometheusRules for application and service monitoring.
+# Prometheus picks these up automatically because
+# ruleSelectorNilUsesHelmValues: false is set in values.yaml.
+#
+# Annotations use Discord markdown (**bold**) around namespace
+# so it stands out in alert messages.
+#
+# Add more groups/rules below as needed for each application.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: custom-app-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus # must match helm release name
+spec:
+  groups:
+    # ── CPU throttling (replaces disabled default rule) ─────────
+    - name: cpu-throttling
+      rules:
+        - alert: CPUThrottlingHigh
+          expr: |
+            sum(increase(container_cpu_cfs_throttled_periods_total{container!=""}[5m])) by (cluster, container, pod, namespace)
+            / sum(increase(container_cpu_cfs_periods_total{container!=""}[5m])) by (cluster, container, pod, namespace)
+            > (25 / 100)
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "CPUThrottlingHigh in **{{ $labels.namespace }}**/{{ $labels.pod }}"
+            description: "{{ $value | humanizePercentage }} throttling of CPU in namespace **{{ $labels.namespace }}** for container {{ $labels.container }} in pod {{ $labels.pod }}."
+
+    # ── Pod health ──────────────────────────────────────────────
+    - name: pod-health
+      rules:
+        - alert: PodCrashLooping
+          expr: rate(kube_pod_container_status_restarts_total[15m]) * 60 * 15 > 3
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "PodCrashLooping in **{{ $labels.namespace }}**/{{ $labels.pod }}"
+            description: "{{ $labels.container }} in pod {{ $labels.pod }} (namespace **{{ $labels.namespace }}**) restarted {{ $value | humanize }} times in the last 15m."
+
+        - alert: PodNotReady
+          expr: |
+            min_over_time(kube_pod_status_ready{condition="true"}[5m]) == 0
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "PodNotReady in **{{ $labels.namespace }}**/{{ $labels.pod }}"
+            description: "Pod {{ $labels.pod }} in namespace **{{ $labels.namespace }}** has been in a non-ready state for over 10 minutes."
+
+    # ── Deployment health ───────────────────────────────────────
+    - name: deployment-health
+      rules:
+        - alert: DeploymentReplicasMismatch
+          expr: |
+            kube_deployment_spec_replicas != kube_deployment_status_ready_replicas
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ReplicasMismatch in **{{ $labels.namespace }}**/{{ $labels.deployment }}"
+            description: "Deployment {{ $labels.deployment }} in namespace **{{ $labels.namespace }}** does not have all expected replicas ready."
+
+    # ── Container resources ─────────────────────────────────────
+    - name: container-resources
+      rules:
+        - alert: ContainerHighCPU
+          expr: |
+            sum(rate(container_cpu_usage_seconds_total{container!="", container!="POD"}[5m])) by (namespace, pod, container)
+            / sum(kube_pod_container_resource_limits{resource="cpu", container!=""}) by (namespace, pod, container) > 0.9
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ContainerHighCPU in **{{ $labels.namespace }}**/{{ $labels.pod }}/{{ $labels.container }}"
+            description: "Container {{ $labels.container }} in namespace **{{ $labels.namespace }}** is sustaining CPU usage above 90% of its limit for 10m."
+
+        - alert: ContainerOOMKilled
+          expr: |
+            kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1
+            and on (namespace, pod, container)
+            increase(kube_pod_container_status_restarts_total[10m]) > 0
+          for: 0m
+          labels:
+            severity: critical
+          annotations:
+            summary: "OOMKilled in **{{ $labels.namespace }}**/{{ $labels.pod }}/{{ $labels.container }}"
+            description: "Container {{ $labels.container }} in namespace **{{ $labels.namespace }}** was OOMKilled. Consider increasing memory limits."
+
+    # ── Node health ─────────────────────────────────────────────
+    - name: node-health
+      rules:
+        - alert: NodeHighMemoryUsage
+          expr: |
+            (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 0.90
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node {{ $labels.instance }} memory usage > 90%"
+            description: "Node {{ $labels.instance }} memory utilisation is at {{ $value | humanizePercentage }}."
+
+        - alert: NodeHighDiskUsage
+          expr: |
+            (1 - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"}) > 0.85
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node {{ $labels.instance }} disk usage > 85% on {{ $labels.mountpoint }}"
+            description: "Filesystem {{ $labels.device }} on node {{ $labels.instance }} is at {{ $value | humanizePercentage }} capacity."
+
+    # ── PVC storage ─────────────────────────────────────────────
+    - name: pvc-storage
+      rules:
+        - alert: PVCAlmostFull
+          expr: |
+            kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes > 0.85
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "PVC in **{{ $labels.namespace }}**/{{ $labels.persistentvolumeclaim }} > 85% full"
+            description: "PVC {{ $labels.persistentvolumeclaim }} in namespace **{{ $labels.namespace }}** is running low on space."
+
+    # ── Example: HTTP application alerts ────────────────────────
+    # Uncomment and adjust for apps that expose Prometheus metrics.
+    #
+    # - name: http-app-alerts
+    #   rules:
+    #     - alert: HighErrorRate
+    #       expr: |
+    #         sum(rate(http_requests_total{status=~"5..", namespace="your-app-namespace"}[5m]))
+    #         / sum(rate(http_requests_total{namespace="your-app-namespace"}[5m])) > 0.05
+    #       for: 5m
+    #       labels:
+    #         severity: critical
+    #       annotations:
+    #         summary: "HighErrorRate in **{{ $labels.namespace }}**"
+    #         description: "5xx rate in namespace **{{ $labels.namespace }}** is {{ $value | humanizePercentage }} over the last 5m."
+    #
+    #     - alert: HighLatencyP99
+    #       expr: |
+    #         histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{namespace="your-app-namespace"}[5m])) by (le))
+    #         > 2
+    #       for: 5m
+    #       labels:
+    #         severity: warning
+    #       annotations:
+    #         summary: "HighLatencyP99 in **{{ $labels.namespace }}**"
+    #         description: "99th percentile response time in namespace **{{ $labels.namespace }}** is {{ $value }}s."
