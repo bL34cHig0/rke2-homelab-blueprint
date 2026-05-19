@@ -265,7 +265,11 @@ kubectl get ingressroute -n cattle-system
 
 ### Step 8: Configure DNS
 
-Navigate to Cloudflare or your DNS provider. Set up a wildcard record (if you haven't) and an `A` record pointing to the designated ingress node's public IP, with the name matching the `hostname` set during Helm install and the `Host(...)` in `ingress.yaml`.
+Navigate to Cloudflare or your DNS provider.
+
+Point an `A` record at the designated ingress node's public IP with the name matching the `hostname` set during Helm install and the `Host(...)` in `ingress.yaml`. If you already have a wildcard record (e.g. `*.example.com`) covering that hostname, no additional record is needed — the wildcard suffices.
+
+**Note**: wildcards match exactly one label and do **not** cover the apex domain or deeper subdomains. For example, `*.example.com` covers `rancher.example.com` but neither `example.com` nor `rancher.apps.example.com` — those need their own records.
 
 ### Step 9: Initial Login and Bootstrap Password
 

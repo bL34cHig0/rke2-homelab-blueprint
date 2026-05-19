@@ -435,8 +435,11 @@ kubectl get ingressroute -n traefik
 
 ### Step 4: Configure DNS
 
-Navigate to Cloudflare and create an **A** record pointing to the designated ingress node's public IP with the name set to the domain name specified in the **ingress.yaml** for traefik's dashboard.
-For example, the name should point to "**traefik.k8**".
+Navigate to Cloudflare or your DNS provider.
+
+Point an `A` record at the designated ingress node's public IP with the name set to the domain name specified in `ingress.yaml` for Traefik's dashboard (for example, `traefik.example.com`). If you already have a wildcard record (e.g. `*.example.com`) covering that hostname, no additional record is needed — the wildcard suffices.
+
+**Note**: wildcards match exactly one label and do **not** cover the apex domain or deeper subdomains. For example, `*.example.com` covers `traefik.example.com` but neither `example.com` nor `traefik.apps.example.com` — those need their own records.
 
 #### 4.1 Access and Login to Traefik Dashboard via Hostname
 

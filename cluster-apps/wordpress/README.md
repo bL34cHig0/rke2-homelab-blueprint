@@ -391,9 +391,11 @@ kubectl logs <wordpress-pod-name> -n wordpress
 
 ### Step 5: Configure DNS
 
-Navigate to **Cloudflare** or your DNS provider. 
+Navigate to **Cloudflare** or your DNS provider.
 
-Setup a wildcard record (if you haven't) and an `A` record pointing to the **designated ingress node's** public IP, with the name set to the **Host** specified in the ingress route.
+Point an `A` record at the **designated ingress node's** public IP with the name set to the **Host** specified in the ingress route. If you already have a wildcard record (e.g. `*.example.com`) covering that hostname, no additional record is needed — the wildcard suffices.
+
+**Note**: wildcards match exactly one label and do **not** cover the apex domain or deeper subdomains. For example, `*.example.com` covers `wp.example.com` but neither `example.com` nor `wp.apps.example.com` — those need their own records.
 
 ### Step 6: Post-Deployment Hardening Verification
 
