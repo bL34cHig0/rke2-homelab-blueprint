@@ -1,6 +1,6 @@
 # RKE2 Cluster Blueprint
 
-A reproducible blueprint for an RKE2-based Kubernetes cluster on Ubuntu hosts. It covers OS preparation, cluster installation, CIS hardening, networking (MetalLB, NAT egress), ingress with Traefik + cert-manager (Let's Encrypt wildcard), and reference deployments for Rancher, WordPress, and a Prometheus/Grafana monitoring stack.
+A reproducible blueprint for an RKE2-based Kubernetes cluster on Ubuntu hosts. It covers OS preparation, cluster installation, CIS hardening, networking (MetalLB, NAT egress), ingress with Traefik + cert-manager (Let's Encrypt wildcard), and reference deployments for Rancher, WordPress, and a Prometheus/Grafana monitoring stack. Designed as a hands-on learning vehicle for engineers getting into security, cloud, or platform engineering, and adaptable to production.
 
 This repository is a starting point — every domain, email, namespace and organization identifier appears as a placeholder you must replace before applying any manifest.
 
@@ -12,6 +12,7 @@ This repository is a starting point — every domain, email, namespace and organ
 - [Suggested Order of Operations](#suggested-order-of-operations)
 - [Pod Security Baseline](#pod-security-baseline)
 - [Suitable Hosting Environments](#suitable-hosting-environments)
+- [Scope and Limits](#scope-and-limits)
 - [Acknowledgments](#acknowledgments)
 - [Contributing](#contributing)
 
@@ -20,6 +21,8 @@ This repository is a starting point — every domain, email, namespace and organ
 This blueprint is the product of roughly 7 months of building and rebuilding Kubernetes clusters from scratch with security as a first-class concern — host hardening, CIS Benchmark conformance, network microsegmentation, image and pod security policy, and the operational habits that surround them. The repo distills those iterations into a coherent starting point others can adopt without repeating every trial-and-error step I went through.
 
 Decisions here reflect specific tradeoffs and learning moments. Not every choice will be optimal for every environment, but each one has a stated reason in the docs — the path forward is to refine them in the open, not to hide them.
+
+If you're getting hands-on with security, cloud, or platform engineering — building toward a homelab that reflects real production patterns, or wanting a starting point you can adapt rather than build from scratch — that's exactly who this is for. The blueprint is production-adaptable: the security choices transfer cleanly to larger clusters (see [Scope and Limits](#scope-and-limits) for what scales as-is and what would need to be swapped), the manifests are real working configs rather than skeleton examples, and the structure is designed so you can lift pieces into a more demanding setup rather than discard the work.
 
 ## Placeholder Convention
 
@@ -95,6 +98,38 @@ This blueprint is sized for a small RKE2 cluster — typically 1 control-plane +
 > **What to avoid:** "container-style" or OpenVZ-based budget VPS plans without true kernel access. RKE2 needs to load kernel modules and run an embedded containerd, so stick to KVM/Xen/Hyper-V VPS, dedicated servers, or bare metal. If you're unsure, look for the provider explicitly advertising "KVM VPS."
 
 For sizing, a minimal viable cluster is ~6 GB RAM total (1 GB per node baseline + headroom for Traefik, cert-manager, Rancher, Prometheus, and your apps). A 3-node Hetzner CX22 cluster comfortably runs everything in this blueprint plus a small reference workload like the WordPress example.
+
+## Scope and Limits
+
+This blueprint targets **small-to-mid Kubernetes clusters** — homelab, learning, self-hosted staging, and small production deployments where a 1–5 node cluster is enough. It is not, as-shipped, an enterprise-tier or large-scale cluster blueprint. The line is fuzzy, but the breakdown below sets honest expectations.
+
+**What transfers to clusters of any size:**
+
+The hardening patterns are workload-level decisions, so they survive the jump to larger clusters cleanly:
+
+- Pod security context, capability drops, read-only root filesystems, dedicated ServiceAccounts with `automountServiceAccountToken: false`
+- NetworkPolicy microsegmentation per workload
+- The rate-limit and `X-Forwarded-For` posture for Cloudflare-fronted traffic
+- The cert-manager + DNS-01 wildcard model
+- Traefik with `externalTrafficPolicy: Local`
+- The folder-per-app repository structure
+
+**What would need to be swapped out at large scale:**
+
+| Component | Current choice | Large-scale alternative |
+|---|---|---|
+| Control plane | Single node | 3+ nodes for etcd quorum and HA |
+| Load balancer | MetalLB L2 mode | MetalLB BGP, or a hardware LB — L2 funnels all ingress through one node at a time |
+| Storage | Longhorn (2 replicas, encrypted) | Rook/Ceph, OpenEBS Mayastor, or external storage for high IOPS or large volume counts |
+| Database (reference workload) | Single-replica MariaDB | Galera Cluster or primary/replica replication |
+| Metrics | Single-instance Prometheus | Thanos, Cortex, or VictoriaMetrics for long-term storage and horizontal scaling |
+| Manifest application | Imperative `kubectl apply` | GitOps (Argo CD, Flux) |
+| Policy enforcement | None — patterns applied per-manifest | Kyverno or OPA Gatekeeper enforcing the hardening patterns cluster-wide |
+| Backups | Not included | Velero for cluster + PVC backups |
+| Logging | Not included | Loki, ELK, or similar |
+| Egress NAT | Single ingress node | HA egress or CNI-native (e.g., Cilium) |
+
+**Bottom line:** treat this as a **security baseline + reference patterns** that survive the jump to larger clusters, not as a production blueprint at scale. The hardening choices are the most valuable transferable artifact; the operational substrate — HA control plane, storage tier, observability scaling, GitOps, multi-tenancy — is out of scope for this repo and needs separate decisions for production deployments.
 
 ## Acknowledgments
 
