@@ -4,7 +4,7 @@ metadata:
   name: wordpress-apache-config
   namespace: wordpress
 data:
-  hide-versions.conf: |
+  zz-hide-versions.conf: |
     ServerTokens Prod
     ServerSignature Off
 ---

@@ -189,8 +189,8 @@ spec:
         - name: tmp
           mountPath: /tmp
         - name: apache-config
-          mountPath: /etc/apache2/conf-available/hide-versions.conf
-          subPath: hide-versions.conf
+          mountPath: /etc/apache2/conf-enabled/zz-hide-versions.conf
+          subPath: zz-hide-versions.conf
         - name: php-config
           mountPath: /usr/local/etc/php/conf.d/custom-php.ini
           subPath: custom-php.ini

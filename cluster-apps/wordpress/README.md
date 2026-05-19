@@ -29,6 +29,9 @@ The WordPress deployment is a custom configuration. It is deployed using a layer
   - [Step 4: Wordpress Default Headers, Rate Limit, and Endpoint Restriction](#step-4-wordpress-default-headers-rate-limit-and-endpoint-restriction)
     - [4.1 Wordpress SSL Certificate and Ingress Route Configuration](#41-wordpress-ssl-certificate-and-ingress-route-configuration)
   - [Step 5: Configure DNS](#step-5-configure-dns)
+  - [Step 6: Post-Deployment Hardening Verification](#step-6-post-deployment-hardening-verification)
+    - [6.1 Verify Apache Version Hiding on Error Pages](#61-verify-apache-version-hiding-on-error-pages)
+    - [6.2 Configure WordPress Permalinks (Avoid Soft 404s)](#62-configure-wordpress-permalinks-avoid-soft-404s)
 - [Why BusyBox is Used in the Wordpress Deployment?](#why-busybox-is-used-in-the-wordpress-deployment)
   - [What is BusyBox?](#what-is-busybox)
 - [Why we use it in the deployment:](#why-we-use-it-in-the-deployment)
@@ -284,7 +287,7 @@ kubectl apply -f wordpress-service-account.yaml
 
 #### 3.4 Wordpress ConfigMap (Security Hardening)
 
-Apply `wordpress-config.yaml` to disable `Apache` and `PHP` fingerprinting, and to set the `urls`:
+Apply `wordpress-config.yaml` to disable `Apache` and `PHP` fingerprinting, and to set the `urls`. The Apache directive file is named `zz-hide-versions.conf` and mounted into `/etc/apache2/conf-enabled/` (not `conf-available/`) — see [Step 6.1](#61-verify-apache-version-hiding-on-error-pages) for the rationale and verification.
 
 ```
 kubectl apply -f wordpress-config.yaml
@@ -391,6 +394,98 @@ kubectl logs <wordpress-pod-name> -n wordpress
 Navigate to **Cloudflare** or your DNS provider. 
 
 Setup a wildcard record (if you haven't) and an `A` record pointing to the **designated ingress node's** public IP, with the name set to the **Host** specified in the ingress route.
+
+### Step 6: Post-Deployment Hardening Verification
+
+Two hardening tasks must be confirmed after the deployment is live: the Apache version-disclosure suppression from Step 3.4 must actually be in effect on Apache's native error pages, and WordPress must be configured to return proper `404` statuses for non-existent URLs. Both were sources of real-world leakage during initial rollout — this section documents the chains of cause and effect and the verification commands so the same regressions don't recur on a future rebuild.
+
+In every command below, replace `<your-domain>` with the FQDN configured in the ingress route.
+
+#### 6.1 Verify Apache Version Hiding on Error Pages
+
+The `wordpress-apache-config` ConfigMap from Step 3.4 disables Apache's version disclosure via two directives:
+
+```
+ServerTokens Prod
+ServerSignature Off
+```
+
+- `ServerTokens Prod` reduces the `Server:` response header to just `Apache` (no version, no OS).
+- `ServerSignature Off` removes the trailing `Apache/X.Y.Z (Debian) Server at <host> Port 80` footer from Apache's auto-generated error pages (404, 403, 405, etc.).
+
+Two implementation details determine whether these directives actually take effect — both surfaced during initial rollout when the version still leaked from 404 pages despite the ConfigMap being applied.
+
+**Mount location must be `conf-enabled/`, not `conf-available/`.** Debian's Apache packaging only loads configs from `/etc/apache2/conf-enabled/` (normally a symlink directory populated by `a2enconf`). With `readOnlyRootFilesystem: true` we cannot run `a2enconf` at startup, so the ConfigMap is mounted directly into `conf-enabled/` via a `subPath` — that bypasses the symlink workflow entirely.
+
+**Filename must sort after `security.conf`.** Apache parses `conf-enabled/*.conf` in alphabetical order, and for single-valued directives like `ServerTokens`/`ServerSignature` the **last definition wins**. Debian's stock `security.conf` (also under `conf-enabled/`) sets `ServerTokens OS` and `ServerSignature On`. Any custom file whose name sorts before `security.conf` (e.g. `hide-versions.conf` at `h`) is silently overridden. The file is therefore named **`zz-hide-versions.conf`** — the `zz-` prefix is the conventional "load me last" marker (also seen in `/etc/sudoers.d/`, `/etc/profile.d/`) and guarantees our directives are the final word regardless of what else gets added to `conf-enabled/` later.
+
+To verify, send a `TRACE` request to the site. Debian's `security.conf` ships `TraceEnable Off`, so Apache returns its own 405 page directly — this bypasses WordPress's `index.php` rewrite, which would otherwise mask the Apache error page entirely:
+
+```
+curl -sS -i -X TRACE https://<your-domain>/
+```
+
+**Before the fix** the response body (HTTP 405) contained:
+
+```
+<hr>
+<address>Apache/2.4.66 (Debian) Server at <your-domain> Port 80</address>
+```
+
+**After the fix** both the `<hr>` and `<address>` lines are absent — `ServerSignature Off` is now in effect. Content-length on the same 405 response drops from `344` to `262` bytes.
+
+To inspect the loaded config from inside the pod:
+
+```
+kubectl -n wordpress exec deploy/wordpress -- ls /etc/apache2/conf-enabled/
+kubectl -n wordpress exec deploy/wordpress -- cat /etc/apache2/conf-enabled/zz-hide-versions.conf
+kubectl -n wordpress exec deploy/wordpress -- apache2ctl -t -D DUMP_INCLUDES
+```
+
+The directory listing and `DUMP_INCLUDES` output should both show `zz-hide-versions.conf` **after** `security.conf` in alphabetical order.
+
+**Note — response headers vs. error-page bodies are two separate leaks.** The Traefik `default-headers` middleware applied in Step 4 sets `Server: ""`, which strips the `Server:` header from every response at the proxy layer. That alone hides the version on regular requests, which can give a false sense that Apache hardening is working. It does **not** affect the bodies of Apache's auto-generated error pages — those are rendered by Apache and pass through Traefik unchanged. The `ServerSignature Off` directive (correctly loaded via the `zz-` prefix) is what plugs the second leak. Both layers are kept in place as defense-in-depth.
+
+#### 6.2 Configure WordPress Permalinks (Avoid Soft 404s)
+
+WordPress's default permalink setting is **Plain** (URLs like `/?p=123`). Combined with the official `wordpress` Docker image, this produces incorrect `200 OK` responses for non-existent URLs — a "soft 404" — which is harmful for SEO (Google treats them as duplicate-content copies of the homepage and can suppress legitimate pages) and confusing for monitoring or external link checkers.
+
+The cause is a quirk of the Docker image's entrypoint, not a WordPress core bug:
+
+1. The image's entrypoint script **unconditionally writes** a `.htaccess` to `/var/www/html/` containing a `mod_rewrite` block that rewrites every request not matching an existing file or directory to `/index.php`, **regardless of the configured permalink structure**.
+2. With permalinks set to Plain, WordPress has no rewrite rules to parse the rewritten URL — it receives `/index.php` with no query parameters and cannot tell that a specific resource was requested.
+3. WordPress then defaults to the home query (`is_home()` true) and returns **HTTP 200** with the homepage body. The expected `is_404()`-true / HTTP 404 path is never reached.
+
+Switching to any non-Plain permalink structure restores correct behavior, because WordPress can then parse the original URL against the permalink rules, fail to match, and properly set the 404 status.
+
+In `wp-admin → Settings → Permalinks`, choose any structure other than Plain — **Day and name**, **Month and name**, **Post name**, or a custom structure all work. Save Changes. WordPress regenerates the in-DB permalink structure and (when filesystem permits) rewrites `.htaccess`.
+
+Verify with:
+
+```
+curl -sS -o /dev/null -w 'final=%{http_code}\nurl=%{url_effective}\n' \
+  -L https://<your-domain>/this-definitely-does-not-exist
+```
+
+Expected output **before** the permalink change:
+
+```
+final=200
+url=https://<your-domain>/this-definitely-does-not-exist/
+```
+
+(Note `200` — soft 404 — and the trailing-slash canonical redirect that WordPress applies before serving the homepage.)
+
+Expected output **after** the permalink change:
+
+```
+final=404
+url=https://<your-domain>/this-definitely-does-not-exist
+```
+
+If `final=200` persists, re-save the Permalinks page in wp-admin to force regeneration of the rewrite rules, then retest.
+
+**Note — why this is not addressed by Step 6.1's Apache hardening.** The Apache `ServerSignature` / `ServerTokens` directives only apply to error pages Apache itself generates (e.g. a `TRACE` request that returns 405 before reaching WordPress). Browser requests to non-existent URLs are caught by `.htaccess` and handed to WordPress, which produces its own response — Apache's error directives never enter that path. The permalink fix is therefore complementary to, and not replaceable by, the Apache hardening.
 
 ---
 
