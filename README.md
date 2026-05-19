@@ -98,11 +98,13 @@ For sizing, a minimal viable cluster is ~6 GB RAM total (1 GB per node baseline 
 
 ## Acknowledgments
 
-Special thanks to **[TechnoTim](https://www.youtube.com/@technotim)**, whose tutorials laid the original groundwork for this project. The practical Kubernetes, self-hosting, homelab, and security content freely available on his channel is what made it possible to build this from first principles. This repo stands on that foundation and tries to push it a little further into hardened, opinionated defaults.
+Special thanks to **[TechnoTim](https://www.youtube.com/@technotim)**, whose tutorials laid the original groundwork for this project. The practical Kubernetes, self-hosting, and homelab content freely available on his channel is what made it possible to build this from first principles. This repo stands on that foundation and pushes it further into hardened, opinionated defaults.
 
 ## Contributing
 
 Contributions are welcome — hardening fixes, simpler manifests, better defaults, additional reference workloads, security review, or clearer documentation. If you spot something that could be more idiomatic, more secure, or just better explained, open a PR or an issue. The goal is for this to be a living blueprint, not a one-off snapshot — best practices on configuring and managing Kubernetes clusters, workloads, and the supporting infrastructure evolve quickly, and the repo should evolve with them.
+
+**Security-hardened manifests for other prominent cluster apps and infrastructure components are especially welcome** — for example, GitOps controllers (Argo CD, Flux), auth providers (Authentik, Keycloak, Dex), secret management (External Secrets Operator, Vault, Sealed Secrets), backups (Velero), networking (Cilium, Istio, Linkerd), observability extensions (Loki, Tempo, Thanos, OpenTelemetry), or popular self-hosted apps (Vaultwarden, Nextcloud, Immich, Home Assistant, GitLab). The aim is to grow this into a broader catalog of production-ready, hardened patterns that future operators can adopt without re-deriving the same security choices.
 
 If you find this useful or beneficial in your own homelab, learning journey, or production setup, please consider **starring the repo** and **sharing it** with others who might get value from it. Visibility is what turns a personal project into a community resource.
 
