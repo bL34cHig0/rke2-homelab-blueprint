@@ -366,6 +366,14 @@ kubectl create secret generic cloudflare-token-secret -n cert-manager \
   --from-literal=cloudflare-token='<your-cloudflare-api-token>'
 ```
 
+**Note**: The secret must be created in the **cert-manager** namespace. The `letsencrypt-staging` and `letsencrypt-production` `ClusterIssuer`s reference it via `apiTokenSecretRef`, and cert-manager resolves that reference in its own namespace. The secret name (`cloudflare-token-secret`) and key (`cloudflare-token`) must match the values in the issuer manifests.
+
+Verify the secret:
+
+```
+kubectl get secret cloudflare-token-secret -n cert-manager -o yaml
+```
+
 #### 3.2 Implement Staging Cluster Issuer and Certificate
 
 Change into the **issuers** directory, if not in it and apply the staging cluster issuer `letsencrypt-staging.yaml`:
