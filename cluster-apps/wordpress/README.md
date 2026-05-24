@@ -330,6 +330,27 @@ Apply `wordpress-deployment.yaml` if the storage capacity and resources doesn't 
 kubectl apply -f wordpress-deployment.yaml
 ```
 
+**Caveat: Updating WordPress core.** Do **not** update WordPress core from the dashboard (**Dashboard → Updates**). WordPress core files live in the ephemeral `wp-html` `emptyDir` volume, which is re-seeded from the container image every time a pod restarts. A dashboard update writes new core files into that `emptyDir`, so it is **lost on the next pod restart** and only ever reaches the single replica that served the request — leaving the other replica on the old version. The container image is the source of truth for the core version: the official `wordpress` entrypoint only seeds core into an *empty* volume, so the image tag fully determines which version runs.
+
+To update WordPress core, bump the image tag in `wordpress-deployment.yaml` and re-apply:
+
+```
+# edit the image tag, e.g. wordpress:6.9.4-php8.5-apache
+kubectl apply -f wordpress-deployment.yaml
+kubectl rollout status deployment/wordpress -n wordpress
+```
+
+This performs a rolling update so every replica lands on the same version consistently. If the new version requires a database schema change, WordPress shows a one-time "Database Update Required" prompt after the rollout — completing it then is correct and safe.
+
+Alternatively, patch the running deployment in place — useful for quick image bumps without editing the YAML, but update `wordpress-deployment.yaml` to match immediately afterward so the manifest stays the source of truth (otherwise the next `kubectl apply -f wordpress-deployment.yaml` will revert the tag):
+
+```
+kubectl set image deployment/wordpress wordpress=wordpress:6.9.4-php8.5-apache -n wordpress
+kubectl rollout status deployment/wordpress -n wordpress
+```
+
+Plugins, themes, and media uploads live on the persistent `wp-content` PVC, so installing and updating **those** from the dashboard is fine — they persist and are shared across all replicas.
+
 #### 3.9 Wordpress Service
 
 Apply `wordpress-service.yaml`:
