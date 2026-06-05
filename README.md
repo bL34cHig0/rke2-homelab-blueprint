@@ -59,6 +59,7 @@ If you prefer to **group cluster services under a dedicated subdomain** (`<servi
 └── cluster-apps/                    Helm values + Kubernetes manifests
     ├── traefik/                     Ingress + cert-manager (Let's Encrypt DNS-01)
     ├── rancher/                     Cluster management UI
+    ├── longhorn/                    Distributed block storage (encrypted StorageClass)
     ├── prometheus-grafana/          kube-prometheus-stack values, alert rules
     └── wordpress/                   Reference workload (WP + MariaDB)
 ```
@@ -72,9 +73,10 @@ If you prefer to **group cluster services under a dedicated subdomain** (`<servi
 5. **Load balancer** — `infrastructure/metallb-load-balancer-config.md`
 6. **Ingress + TLS** — `cluster-apps/traefik/` (cert-manager, then Traefik, then dashboard)
 7. **Cluster management** — `cluster-apps/rancher/`
-8. **Observability** — `cluster-apps/prometheus-grafana/`
-9. **Application workload** — `cluster-apps/wordpress/` (reference pattern for new apps)
-10. **Operations** — `infrastructure/node-maintenance.md`, `infrastructure/uninstalling-or-deactivating-auto-configuration-package.md`
+8. **Storage** — `cluster-apps/longhorn/` (install via the Rancher UI; provides the StorageClasses the next apps' PVCs bind to)
+9. **Observability** — `cluster-apps/prometheus-grafana/`
+10. **Application workload** — `cluster-apps/wordpress/` (reference pattern for new apps)
+11. **Operations** — `infrastructure/node-maintenance.md`, `infrastructure/uninstalling-or-deactivating-auto-configuration-package.md`
 
 ## Pod Security Baseline
 

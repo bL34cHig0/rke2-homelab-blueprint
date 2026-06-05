@@ -1,0 +1,26 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: longhorn
+  namespace: longhorn-system
+  annotations:
+    kubernetes.io/ingress.class: traefik-external
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`longhorn.<your-domain>`)
+      kind: Rule
+      middlewares:
+        # basic-auth MUST be present — the Longhorn UI has no built-in auth.
+        - name: longhorn-basicauth
+        - name: default-headers
+      services:
+        # the chart's UI Service in longhorn-system
+        - name: longhorn-frontend
+          port: 80
+  tls:
+    # cert-manager Certificate in this namespace writes this secret
+    # (see longhorn-certificate.yaml). The secret must live in the same
+    # namespace as the IngressRoute.
+    secretName: default-cert-production-tls
