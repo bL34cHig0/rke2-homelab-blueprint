@@ -177,6 +177,8 @@ Replace `<control-plane-private-ip>` with the actual private IP address of the c
 | `secrets-encryption-provider: secretbox` | Enables at-rest encryption of Kubernetes secrets using the `secretbox` provider. |
 | `kube-apiserver-arg: enable-admission-plugins=DenyServiceExternalIPs` | Hardens the API server by denying services from using arbitrary external IPs. |
 
+> **Optional — CIS Benchmark hardening:** This base config is functional but not CIS-hardened. RKE2 ships a built-in `profile: cis` mode you can enable on top of this guide — it is **optional** and works for both a **new cluster** (add `profile: cis` to this `config.yaml` before the first start) and an **existing, already-running cluster** (append the profile and do a rolling restart). The profile has prerequisites (a dedicated `etcd` user, required kernel sysctls, and per-namespace NetworkPolicies), all of which are covered step-by-step — for both scenarios — in [rke2-cis-self-assessment-benchmark-config.md](rke2-cis-self-assessment-benchmark-config.md). If you intend to harden a new cluster, read that guide before starting the services below, since it modifies this `config.yaml`.
+
 ---
 
 ## Start the RKE2 Server Service
