@@ -32,7 +32,7 @@ The reference Kubernetes architecture is `1 control plane` with `3 worker nodes`
 
 </div>
 
-## Table of Content
+## Table of Contents
 
 1. [Network Addressing Model and Security Rationale](#network-addressing-model-and-security-rationale)
 2. [Image Provisioning on Hetzner](#image-provisioning-on-hetzner)

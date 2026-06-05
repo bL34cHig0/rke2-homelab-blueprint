@@ -23,7 +23,7 @@ The configuration steps are outlined below and were tested on `Hetzner Cloud` VP
 - The `NAT` server could be any server within your cluster with a public and private IP.
 - The control plane is used as the `NAT` server in this case, because it has a public and private IP.
 
-## Table of Content
+## Table of Contents
 
 - [Step 1 - Creating the Network and Servers](#step-1---creating-the-network-and-servers)
 - [Step 2 - Adding the Route to the Network](#step-2---adding-the-route-to-the-network)

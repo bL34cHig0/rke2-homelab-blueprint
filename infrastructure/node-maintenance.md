@@ -2,6 +2,20 @@
 
 This documentation explains how to safely drain a node, optionally respecting the PodDisruptionBudget you have defined.
 
+## Table of Contents
+
+- [Before We Begin](#before-we-begin)
+  - [Configure a Disruption Budget (Optional)](#configure-a-disruption-budget-optional)
+- [Use Kubectl Drain to Remove a Node from Service](#use-kubectl-drain-to-remove-a-node-from-service)
+  - [Step 1: Identify the Name of the Node You Wish to Drain](#step-1-identify-the-name-of-the-node-you-wish-to-drain)
+  - [Step 2: Tell Kubernetes to Drain the Node](#step-2-tell-kubernetes-to-drain-the-node)
+  - [Step 3: PodDisruptionBudget Error](#step-3-poddisruptionbudget-error)
+  - [Step 4: Use the Production-safe Drain Command](#step-4-use-the-production-safe-drain-command)
+  - [Step 5: Perform Maintenance on the Drained Node (Removed from Service)](#step-5-perform-maintenance-on-the-drained-node-removed-from-service)
+  - [Step 6: Mark the Drained Node for Scheduling](#step-6-mark-the-drained-node-for-scheduling)
+  - [Step 7: Apply the Same Steps to Other Nodes](#step-7-apply-the-same-steps-to-other-nodes)
+- [Related Resources](#related-resources)
+
 ## Before We Begin
 
 This task assumes you have met the following prerequisites:

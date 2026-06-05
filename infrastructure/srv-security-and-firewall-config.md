@@ -4,6 +4,17 @@
 
 The configurations below should be installed and configured only on the `control plane` or on a `designated ingress node` that is publicly exposed to the internet. In other words, this should be a server with both a public and a private IP address.
 
+## Table of Contents
+
+- [Install CrowdSec](#install-crowdsec)
+- [Firewall Rules Configuration for K8s/RKE2](#firewall-rules-configuration-for-k8srke2)
+  - [Firewall Rules for Control Plane Nodes](#firewall-rules-for-control-plane-nodes)
+  - [Firewall Rules for Worker Nodes](#firewall-rules-for-worker-nodes)
+- [CrowdSec Commands Playbook](#crowdsec-commands-playbook)
+  - [CrowdSec Docs](#crowdsec-docs)
+
+## Install CrowdSec
+
 1. Install CrowdSec:
    Login as the service account user if you have terminated the ssh session. Add the CrowdSec repository and install the package.
 

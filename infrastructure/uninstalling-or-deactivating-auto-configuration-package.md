@@ -4,6 +4,11 @@ To disable or uninstall automatic configuration for `NAT gateway` configuration,
 
 Otherwise there's a risk, that two DHCP clients will compete over the configuration, which will cause side effects or outages.
 
+## Table of Contents
+
+- [Uninstalling the Auto-configuration Package](#uninstalling-the-auto-configuration-package)
+- [Deactivating Auto-configuration](#deactivating-auto-configuration)
+
 ## Uninstalling the Auto-configuration Package
 
 Do this on the worker server(s) and switch to root user before executing the commands.

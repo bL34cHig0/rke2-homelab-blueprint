@@ -4,6 +4,16 @@ install the prerequisites for RKE2.
 
 Note: Exclude `sudo` from the commands if running as the `root` user on all instances.
 
+## Table of Contents
+
+- [Install essential utility packages for secure key management, curl, wget, and repository management capabilities:](#install-essential-utility-packages-for-secure-key-management-curl-wget-and-repository-management-capabilities)
+- [Change time zone & enable automatic time synchronization:](#change-time-zone--enable-automatic-time-synchronization)
+- [Disable swap to prevent performance issue - read more on this here:](#disable-swap-to-prevent-performance-issue---read-more-on-this-here)
+- [Allow iptables / nftables to inspect and filter traffic passing through Linux bridges:](#allow-iptables--nftables-to-inspect-and-filter-traffic-passing-through-linux-bridges)
+- [Load OverlayFS kernel module for union filesystem functionality:](#load-overlayfs-kernel-module-for-union-filesystem-functionality)
+- [Create and apply critical kernel networking parameters required for Kubernetes and container runtimes to function correctly:](#create-and-apply-critical-kernel-networking-parameters-required-for-kubernetes-and-container-runtimes-to-function-correctly)
+- [Apply all kernel parameter configurations system-wide:](#apply-all-kernel-parameter-configurations-system-wide)
+
 ## Install essential utility packages for secure key management, curl, wget, and repository management capabilities:
 ```
 sudo apt update && sudo apt upgrade -y 

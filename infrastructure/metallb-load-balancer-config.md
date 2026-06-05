@@ -12,6 +12,15 @@ This documentation walks you through the installation of a MetalLB load balancer
 
 Note: This guide assumes you have a Kubernetes cluster running on bare-metal nodes. MetalLB should be installed on the `control plane` or a `designated ingress node` that is publicly exposed to the internet. In other words, this should be a server with both a public and a private IP address.
 
+## Table of Contents
+
+- [What is MetalLB](#what-is-metallb)
+  - [Requirements](#requirements)
+- [Installation Steps](#installation-steps)
+  - [Create a Load Balancer Services Pool of IP Addresses](#create-a-load-balancer-services-pool-of-ip-addresses)
+- [MetalLB Docs](#metallb-docs)
+  - [Upgrade](#upgrade)
+
 ## What is MetalLB
 
 [MetalLB](https://metallb.io/) is a pure software solution that provides a network load-balancer implementation for Kubernetes clusters that are not deployed in supported cloud providers (AWS, GCP, Azure, etc), using standard routing protocols.

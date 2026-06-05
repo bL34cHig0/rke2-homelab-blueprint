@@ -14,6 +14,13 @@ To access these servers (workers), connections must be initiated through a gatew
 
 This approach preserves network isolation, reduces the exposed attack surface, and enforces controlled access to internal resources.
 
+## Table of Contents
+
+- [Steps](#steps)
+  - [SSH Configuration](#ssh-configuration)
+    - [Steps](#steps-1)
+- [SSH Key Rotation Policy](#ssh-key-rotation-policy)
+
 ## Steps
 
 1. Connect to the control plane server from your local PC (external client) via ssh:
