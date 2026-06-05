@@ -29,7 +29,7 @@
 
 ## Overview
 
-[Longhorn](https://longhorn.io/) is a lightweight, cloud-native distributed block storage system for Kubernetes. It provisions replicated `PersistentVolume`s backed by the `driver.longhorn.io` CSI driver and is the storage layer every PVC in this repo binds to (see the `monitoring` and `wordpress` storage classes).
+[Longhorn](https://longhorn.io/) is a lightweight, cloud-native distributed block storage system for Kubernetes. It provisions replicated `PersistentVolume` resources backed by the `driver.longhorn.io` CSI driver and is the storage layer every PVC in this repo binds to (see the `monitoring` and `wordpress` storage classes).
 
 This folder documents installing Longhorn through the **Rancher Apps & Marketplace UI** (rather than Helm directly) and creating a **LUKS-encrypted StorageClass** for workloads that need encryption at rest.
 
@@ -319,7 +319,7 @@ parameters:
   csi.storage.k8s.io/node-stage-secret-namespace: ${pvc.namespace}
 ```
 
-This isolates blast radius (compromising one key exposes one volume) at the cost of managing a Secret per workload. See the Longhorn [encryption docs](https://longhorn.io/docs/latest/advanced-resources/security/volume-encryption/) for details.
+This isolates blast radius (compromising one key exposes one volume) at the cost of managing a Secret per workload. See the Longhorn [encryption docs](https://longhorn.io/docs/1.12.0/advanced-resources/security/volume-encryption/) for details.
 
 ## Operations
 
@@ -377,4 +377,4 @@ kubectl get nodes.longhorn.io -n longhorn-system -o wide
 kubectl -n longhorn-system logs -l app=longhorn-csi-plugin -c longhorn-csi-plugin --tail=200
 ```
 
-For deeper issues, see the Longhorn [troubleshooting guide](https://longhorn.io/docs/latest/troubleshoot/) and [volume encryption docs](https://longhorn.io/docs/latest/advanced-resources/security/volume-encryption/).
+For deeper issues, see the Longhorn [troubleshooting guide](https://longhorn.io/docs/1.12.0/troubleshoot/troubleshooting/) and [volume encryption docs](https://longhorn.io/docs/1.12.0/advanced-resources/security/volume-encryption/).
