@@ -128,13 +128,12 @@ sudo -i
 
 # clone the repo to the root user's home directory (~) and change to wordpress directory
 git clone <repo-url>
-cd wordpress
+cd rke2-homelab-blueprint/cluster-apps/wordpress
 
 # create wordpress namespace
 kubectl create namespace wordpress
 
-# swtich to the wordpress folder and verify all manifest files are intact
-cd wordpress
+# verify all manifest files are intact
 ls
 ```
 

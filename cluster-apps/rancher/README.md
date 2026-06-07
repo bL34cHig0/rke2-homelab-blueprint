@@ -112,7 +112,7 @@ sudo -i
 
 # clone the repo and change to the rancher directory
 git clone <repo-url>
-cd rancher
+cd rke2-homelab-blueprint/cluster-apps/rancher
 
 # create the cattle-system namespace
 kubectl create namespace cattle-system

@@ -101,7 +101,7 @@ source .bashrc
 Change into the `traefik` directory after pulling the repo locally:
 
 ```
-cd traefik
+cd rke2-homelab-blueprint/cluster-apps/traefik
 ```
 
 Create traefik namespace:
@@ -380,7 +380,7 @@ Change into the **issuers** directory, if not in it and apply the staging cluste
 
 ```
 # switch to the staging directory in the issuers directory
-cd issuers/staging or cd ~/traefik/cert-manager/issuers/staging
+cd issuers/staging or cd ~/rke2-homelab-blueprint/cluster-apps/traefik/cert-manager/issuers/staging
 
 # apply the manifest
 kubectl apply -f letsencrypt-staging.yaml
@@ -395,7 +395,7 @@ Apply the staging certificate `default-cert-staging.yaml`:
 
 ```
 # switch to the staging directory in the certificates directory
-cd ../certificates/staging or cd ~/traefik/cert-manager/certificates/staging
+cd ../certificates/staging or cd ~/rke2-homelab-blueprint/cluster-apps/traefik/cert-manager/certificates/staging
 
 # apply the staging certificate manifest
 kubectl apply -f default-cert-staging.yaml
@@ -432,7 +432,7 @@ Apply the staging ingress route for traefik:
 
 ```
 # switch to traefik dashboard directory
-cd ~/traefik/dashboard
+cd ~/rke2-homelab-blueprint/cluster-apps/traefik/dashboard
 
 # apply staging-ingress.yaml
 kubectl apply -f staging-ingress.yaml
@@ -487,7 +487,7 @@ Apply the production issuer:
 
 ```
 # switch to the production directory in the issuers directory
-cd ~/traefik/cert-manager/issuers/production
+cd ~/rke2-homelab-blueprint/cluster-apps/traefik/cert-manager/issuers/production
 
 # apply the production issuer manifest
 kubectl apply -f letsencrypt-production.yaml
@@ -497,7 +497,7 @@ Apply the production certificate:
 
 ```
 # switch to the production directory in the certificates directory
-cd ~/traefik/cert-manager/certificates/production
+cd ~/rke2-homelab-blueprint/cluster-apps/traefik/cert-manager/certificates/production
 
 # apply the production certificate manifest
 kubectl apply -f default-cert-production.yaml
