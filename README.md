@@ -1,11 +1,36 @@
 # RKE2 Cluster Blueprint
 
+[![License: Apache 2.0](https://img.shields.io/github/license/bL34cHig0/rke2-homelab-blueprint?color=blue)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/bL34cHig0/rke2-homelab-blueprint)](https://github.com/bL34cHig0/rke2-homelab-blueprint/stargazers)
+[![Issues](https://img.shields.io/github/issues/bL34cHig0/rke2-homelab-blueprint)](https://github.com/bL34cHig0/rke2-homelab-blueprint/issues)
+![Last commit](https://img.shields.io/github/last-commit/bL34cHig0/rke2-homelab-blueprint)
+![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+
+![RKE2](https://img.shields.io/badge/RKE2-0075FF?logo=rancher&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?logo=kubernetes&logoColor=white)
+![Traefik](https://img.shields.io/badge/Traefik-24A1C1?logo=traefikproxy&logoColor=white)
+![Rancher](https://img.shields.io/badge/Rancher-0075A8?logo=rancher&logoColor=white)
+![Longhorn](https://img.shields.io/badge/Longhorn-5F1CC3?logo=rancher&logoColor=white)
+![CIS Hardened](https://img.shields.io/badge/CIS-hardened-success)
+
 A reproducible blueprint for an RKE2-based Kubernetes cluster on Ubuntu hosts. It covers OS preparation, cluster installation, CIS hardening, networking (MetalLB, NAT egress), ingress with Traefik + cert-manager (Let's Encrypt wildcard), and reference deployments for Rancher, WordPress, and a Prometheus/Grafana monitoring stack. Designed as a hands-on learning vehicle for engineers getting into security, cloud, or platform engineering, and adaptable to production.
 
 This repository is a starting point — every domain, email, namespace and organization identifier appears as a placeholder you must replace before applying any manifest.
 
+## Highlights
+
+- 🔒 **Security-first by default** — CIS Benchmark hardening, restricted Pod Security, dropped Linux capabilities, read-only root filesystems, and dedicated ServiceAccounts with token automount disabled.
+- 🌐 **Production-grade ingress** — Traefik v3 + cert-manager wildcard TLS via Let's Encrypt DNS-01 (Cloudflare), default security headers, and rate limiting.
+- 🧱 **NetworkPolicy microsegmentation** — per-workload network isolation, plus a NAT-egress and CrowdSec/firewall posture for the host layer.
+- 📦 **Batteries included** — Rancher (cluster management), Longhorn (encrypted block storage), MetalLB (bare-metal load balancing), and Prometheus/Grafana with Alertmanager → Discord alerting.
+- 🛠️ **Real, working manifests** — not skeletons. A hardened WordPress + MariaDB reference workload to model new apps on.
+- 📚 **Step-by-step docs** — OS prep, RKE2 install, CIS hardening, networking, node maintenance — each decision explained.
+- ☁️ **Cheap to run** — ~€15/month on a 3-node Hetzner cluster; works on any KVM VPS or bare metal.
+
 ## Table of Contents
 
+- [Highlights](#highlights)
+- [Architecture](#architecture)
 - [Background](#background)
 - [Placeholder Convention](#placeholder-convention)
 - [Layout](#layout)
@@ -15,6 +40,38 @@ This repository is a starting point — every domain, email, namespace and organ
 - [Scope and Limits](#scope-and-limits)
 - [Acknowledgments](#acknowledgments)
 - [Contributing](#contributing)
+
+## Architecture
+
+External traffic terminates TLS at **Traefik** (wildcard certificate issued by **cert-manager**) and is routed to workloads on the RKE2 cluster. **MetalLB** provides the bare-metal `LoadBalancer` IP, **Longhorn** backs persistent storage with encryption at rest, and **Prometheus/Alertmanager** handle observability with alerts delivered to Discord.
+
+```mermaid
+flowchart TB
+    users(["Internet / Users"])
+    cf["Cloudflare<br/>DNS + Edge"]
+    users --> cf --> mlb
+
+    subgraph cluster["RKE2 Cluster · 1 control-plane + N workers"]
+      mlb["MetalLB<br/>L2 LoadBalancer"] --> traefik["Traefik v3<br/>ingress + TLS termination"]
+      certm["cert-manager<br/>Let's Encrypt DNS-01"] -. wildcard cert .-> traefik
+      traefik --> rancher["Rancher<br/>cluster management"]
+      traefik --> wp["WordPress + MariaDB<br/>reference workload"]
+
+      subgraph obs["Observability"]
+        prom["Prometheus"] --> am["Alertmanager"]
+        graf["Grafana"]
+      end
+      am -->|webhook| discord[("Discord alerts")]
+
+      lh[("Longhorn<br/>encrypted PVs")]
+      rancher --> lh
+      wp --> lh
+      prom --> lh
+      graf --> lh
+    end
+```
+
+> Grafana is **not** exposed externally — observability surfaces through Alertmanager → Discord to keep the attack surface minimal. See [`cluster-apps/`](cluster-apps/) for the per-component manifests and [`infrastructure/`](infrastructure/) for the host build.
 
 ## Background
 
@@ -69,7 +126,7 @@ If you prefer to **group cluster services under a dedicated subdomain** (`<servi
 1. **Host preparation** — `infrastructure/rke2-ubuntu-prerequisites.md`, `infrastructure/ubuntu-setup-and-user-provisioning.md`, `infrastructure/ssh-access-to-worker-srv-via-ctrl-plane.md`
 2. **Networking** — `infrastructure/nat-gateway-config.md`, `infrastructure/srv-security-and-firewall-config.md`
 3. **Cluster install** — `infrastructure/rke2-installation.md`
-4. **CIS hardening** — `infrastructure/rke2-cis-self-assessment-benchmark-config.md`
+4. **CIS hardening (optional)** — `infrastructure/rke2-cis-self-assessment-benchmark-config.md` (enable RKE2's `profile: cis` mode; works on a new or existing cluster)
 5. **Load balancer** — `infrastructure/metallb-load-balancer-config.md`
 6. **Ingress + TLS** — `cluster-apps/traefik/` (cert-manager, then Traefik, then dashboard)
 7. **Cluster management** — `cluster-apps/rancher/`
@@ -140,6 +197,8 @@ Special thanks to **[TechnoTim](https://www.youtube.com/@technotim)**, whose tut
 ## Contributing
 
 Contributions are welcome — hardening fixes, simpler manifests, better defaults, additional reference workloads, security review, or clearer documentation. If you spot something that could be more idiomatic, more secure, or just better explained, open a PR or an issue. The goal is for this to be a living blueprint, not a one-off snapshot — best practices on configuring and managing Kubernetes clusters, workloads, and the supporting infrastructure evolve quickly, and the repo should evolve with them.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for workflow and style conventions, and [SECURITY.md](SECURITY.md) for how to report a security issue or an insecure default privately.
 
 Some contributions would be especially valuable:
 
