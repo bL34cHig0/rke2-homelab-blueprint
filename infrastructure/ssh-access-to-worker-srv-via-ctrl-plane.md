@@ -3,13 +3,13 @@
 After provisioning the control plane server(s) with both a public and a private IP address, and the worker node server(s) with only private IP addresses, servers that are assigned private IPs are not directly reachable from external networks. 
 
 <p align="center">
-  <img src="../images/ssh-setup-3.png" alt="Description of image" width="50%">
+  <img src="../images/ssh-setup-3.png" alt="Diagram of reaching public-IP and private-IP servers from your device" width="50%">
 </p>
 
 To access these servers (workers), connections must be initiated through a gateway or bastion host that has a public IP address and network-level reachability to the private subnet. Administrative access (for example, via SSH) is established by first connecting to the public-facing server (control plane) and then forwarding the connection internally to the target private IP. As long as this server is in the same private network as the server(s) without public IPs, ssh access can be established.
 
 <p align="center">
-  <img src="../images/ssh-setup-4.png" alt="Description of image" width="50%">
+  <img src="../images/ssh-setup-4.png" alt="Diagram of bastion jump access from the public network to private servers" width="50%">
 </p>
 
 This approach preserves network isolation, reduces the exposed attack surface, and enforces controlled access to internal resources.
@@ -57,11 +57,11 @@ This approach preserves network isolation, reduces the exposed attack surface, a
      ```
 
     <p align="center">
-      <img src="../images/ssh-setup-5.png" alt="Description of image" width="50%">
+      <img src="../images/ssh-setup-5.png" alt="Terminal copying an SSH key to the control plane with scp" width="50%">
     </p>
     
     <p align="center">
-      <img src="../images/ssh-setup-6.png" alt="Description of image" width="50%">
+      <img src="../images/ssh-setup-6.png" alt="Terminal placing the SSH key under /root/.ssh on the control plane" width="50%">
     </p>
      
      Note: When using scp from your local PC, use the service account username instead of the root user because root login via ssh has been disabled earlier in [ubuntu-setup-and-user-provisioning](ubuntu-setup-and-user-provisioning.md). Additionally, if you opt to copy the private key manually to the root user's `.ssh` directory, ensure there is no trailing whitespace at the end of the file before saving it.
@@ -72,7 +72,7 @@ This approach preserves network isolation, reduces the exposed attack surface, a
     ssh -i <private-key> <root@worker-private-ip>
     ```
     <p align="center">
-      <img src="../images/ssh-setup-7.png" alt="Description of image" width="50%">
+      <img src="../images/ssh-setup-7.png" alt="Terminal SSHing into a private worker node through the control plane jump host" width="50%">
     </p>
     
     Note: Use the root user because no other user has been created on the worker. Also, notice that the worker server has no internet access for now. See [nat-gateway-config](nat-gateway-config.md) documentation on how to provision internet access to the worker server(s).
@@ -116,7 +116,7 @@ By specifying the publicly accessible host (control plane) as an intermediary in
     ```
 
     <p align="center">
-      <img src="../images/ssh-setup-9.png" alt="Description of image" width="50%">
+      <img src="../images/ssh-setup-9.png" alt="Terminal SSH client config using ProxyJump to reach private worker nodes" width="50%">
     </p>
 
 2. Save the file and ensure it has the right file permissions (`0600`):
@@ -134,11 +134,11 @@ By specifying the publicly accessible host (control plane) as an intermediary in
    ssh <unique-name> # prepend the command with sudo if access is denied
    ``` 
     <p align="center">
-      <img src="../images/ssh-setup-10.png" alt="Description of image" width="50%">
+      <img src="../images/ssh-setup-10.png" alt="Terminal SSHing to the control plane via the server-public-ip host alias" width="50%">
     </p>
 
     <p align="center">
-      <img src="../images/ssh-setup-11.png" alt="Description of image" width="50%">
+      <img src="../images/ssh-setup-11.png" alt="Terminal SSHing to a worker via the server-private-ip host alias" width="50%">
     </p>
 
 5. Successful connection should be established.

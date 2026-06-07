@@ -32,7 +32,7 @@ Please replace interface with the value for your network.
     systemctl mask hc-net-ifup@<interface>.service
 
 <p align="center">
-    <img src="../images/nat-setup-2.png" alt="Description of image" width="50%">
+    <img src="../images/nat-setup-2.png" alt="Hetzner docs table of network interface names per server type" width="50%">
 </p>
     
 For example, to deactivate the auto-configuration for the first private network interface, stop and mask the `hc-net-ifup` service for the `enp7s0` interface.

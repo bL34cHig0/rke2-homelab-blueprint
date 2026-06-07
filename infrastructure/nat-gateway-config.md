@@ -51,13 +51,13 @@ The `gateway` should be the private IP address of the `NAT` server (server with 
 1. On Hetzner Cloud dashboard, navigate to `Networks ➜ Select the private network created in step 1 ➜ Routes ➜ Add route` to create a route.
 
     <p align="center">
-      <img src="../images/nat-setup-0.png" alt="Description of image" width="50%">
+      <img src="../images/nat-setup-0.png" alt="Hetzner Cloud private network Routes tab with Add route" width="50%">
     </p>
 
 2. Set the destination to all interfaces (`0.0.0.0`), the subnet to `0`, and the gateway to `10.0.0.2` (control plane private IP). Then click `Add route` to save the route.
 
     <p align="center">
-      <img src="../images/nat-setup-1.png" alt="Description of image" width="50%">
+      <img src="../images/nat-setup-1.png" alt="Hetzner Cloud add-route dialog routing 0.0.0.0/0 via the NAT gateway" width="50%">
     </p>
 
 ### Step 3 - Configuring NAT
@@ -155,7 +155,7 @@ apt update && apt upgrade -y
     ```
     
     <p align="center">
-      <img src="../images/nat-setup-3.png" alt="Description of image" width="50%">
+      <img src="../images/nat-setup-3.png" alt="Terminal: netplan 50-cloud-init.yaml network configuration" width="50%">
     </p>
     
 3. Now create a new file in `/etc/networkd-dispatcher/routable.d`:
@@ -174,7 +174,7 @@ apt update && apt upgrade -y
     ```
 
     <p align="center">
-      <img src="../images/nat-setup-4.png" alt="Description of image" width="50%">
+      <img src="../images/nat-setup-4.png" alt="Terminal: networkd-dispatcher script enabling IP forwarding and iptables MASQUERADE" width="50%">
     </p>
 
     Note: Replace `10.0.0.0/16` with your private network subnet.
@@ -207,7 +207,7 @@ apt update && apt upgrade -y
     ```
 
     <p align="center">
-      <img src="../images/nat-setup-5.png" alt="Description of image" width="50%">
+      <img src="../images/nat-setup-5.png" alt="Terminal: systemd-networkd configuration for enp7s0 with its gateway" width="50%">
     </p>
 
     Note: Replace `10.0.0.1` with your private network gateway IP.
@@ -224,7 +224,7 @@ To add nameservers on the client servers (workers), edit the file `/etc/systemd/
   ```
 
  <p align="center">
-      <img src="../images/nat-setup-6.png" alt="Description of image" width="50%">
+      <img src="../images/nat-setup-6.png" alt="Terminal: systemd resolved.conf with upstream DNS servers" width="50%">
     </p>
 
 Save and restart the worker servers:
@@ -239,7 +239,7 @@ ping -c 4 google.com
 ```
 
 <p align="center">
-      <img src="../images/nat-setup-7.png" alt="Description of image" width="50%">
+      <img src="../images/nat-setup-7.png" alt="Terminal: ping to google.com confirming NAT egress from a worker node" width="50%">
     </p>
 
 ## Conclusion

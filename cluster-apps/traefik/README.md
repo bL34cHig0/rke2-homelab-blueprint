@@ -117,7 +117,7 @@ kubectl get namespaces
 ```
 
 <p align="center">
-    <img src="../../images/traefik-setup-0.png" alt="Description of image" width="50%">
+    <img src="../../images/traefik-setup-0.png" alt="Terminal listing Kubernetes namespaces after installing Traefik" width="50%">
 </p>
 
 Verify helm installation:
@@ -180,7 +180,7 @@ kubectl get pods -n traefik -o jsonpath="{.items[*].spec.containers[*].image}"
 ```
 
 <p align="center">
-    <img src="../../images/traefik-setup-1.png" alt="Description of image" width="50%">
+    <img src="../../images/traefik-setup-1.png" alt="Terminal showing the Traefik LoadBalancer service with its external IP" width="50%">
 </p>
 
 **Note**: Ensure the public IP of the designated ingress node is visible in the **EXTERNAL-IP** field. In this case, it is the control plane's public IP.
@@ -192,7 +192,7 @@ kubectl get pods -n traefik
 ```
 
 <p align="center">
-    <img src="../../images/traefik-setup-2.png" alt="Description of image" width="50%">
+    <img src="../../images/traefik-setup-2.png" alt="Traefik v3 dashboard showing entrypoints and HTTP routers and services" width="50%">
 </p>
 
 #### 1.2 Default Headers and Rate Limit Middleware (Template)
@@ -207,7 +207,7 @@ Instead, **copy this file into each workload's directory**, set `namespace:` to 
 When you adapt this template for a new workload, the consuming `IngressRoute` references both Middlewares by bare name (`name: default-headers`, `name: ratelimit`) and Traefik resolves them in the IngressRoute's namespace.
 
 <p align="center">
-    <img src="../../images/traefik-setup-3.png" alt="Description of image" width="50%">
+    <img src="../../images/traefik-setup-3.png" alt="Browser certificate viewer showing the Traefik wildcard Let's Encrypt certificate" width="50%">
 </p>
 
 #### 1.3 Configure Traefik Dashboard
@@ -265,7 +265,7 @@ kubectl get middleware -n traefik
 ```
 
 <p align="center">
-    <img src="../../images/traefik-setup-4.png" alt="Description of image" width="50%">
+    <img src="../../images/traefik-setup-4.png" alt="Traefik v3 dashboard overview of routers, services, and middlewares" width="50%">
 </p>
 
 ### Step 2: Install and Configure Cert-manager and Let's Encrypt
@@ -328,7 +328,7 @@ kubectl get pods -n cert-manager
 ```
 
 <p align="center">
-    <img src="../../images/cert-manager-setup-1.png" alt="Description of image" width="50%">
+    <img src="../../images/cert-manager-setup-1.png" alt="Terminal showing cert-manager pods Running in the cert-manager namespace" width="50%">
 </p>
 
 Ensure cert-manager services are deployed:
@@ -338,7 +338,7 @@ kubectl get svc -n cert-manager
 ```
 
 <p align="center">
-    <img src="../../images/cert-manager-setup-2.png" alt="Description of image" width="50%">
+    <img src="../../images/cert-manager-setup-2.png" alt="Terminal showing cert-manager services in the cert-manager namespace" width="50%">
 </p>
 
 ### Step 3: Test Cert-manager with Let's Encrypt's Staging API
@@ -352,7 +352,7 @@ Let's Encrypt's staging API has much higher rate limits and is designed for safe
 Login to Cloudflare and follow the settings in the screenshot to generate an API token for **DNS01 challenge** configuration:
 
 <p align="center">
-    <img src="../../images/cert-manager-setup-0.png" alt="Description of image" width="50%">
+    <img src="../../images/cert-manager-setup-0.png" alt="Cloudflare API token permissions for cert-manager DNS-01 (Zone DNS Edit, Zone Read)" width="50%">
 </p>
 
 **Note**: Ensure to adhere to the settings stipulated when generating the API token. See cert-manager [docs](https://cert-manager.io/docs/configuration/acme/dns01/cloudflare/#api-tokens) and cert-manager supports other [DNS01 providers](https://cert-manager.io/docs/configuration/acme/dns01/#supported-dns01-providers), however, Cloudflare is the provider in this case.
@@ -413,7 +413,7 @@ kubectl logs -n cert-manager -f <cert-manager-pod-name>
 If the following logs is outputted, it means that it's creating a **TXT** record in Cloudflare, and if the **CA** (Let's Encrypt) can see that record, it considers the domain verified and issues the certificate.
 
 <p align="center">
-    <img src="../../images/cert-manager-setup-3.png" alt="Description of image" width="50%">
+    <img src="../../images/cert-manager-setup-3.png" alt="cert-manager logs processing a Let's Encrypt DNS-01 ACME challenge" width="50%">
 </p>
 
 In a nutshell, this is what unfolds:
@@ -456,7 +456,7 @@ Open up a web browser and enter the hostname/domain name. In this case, that wou
 Enter the username and password generated in [1.3 Configure Traefik Dashboard](#13-configure-traefik-dashboard) and access should be successful.
 
 <p align="center">
-    <img src="../../images/cert-manager-setup-4.png" alt="Description of image" width="50%">
+    <img src="../../images/cert-manager-setup-4.png" alt="Traefik dashboard during cert-manager staging certificate setup" width="50%">
 </p>
 
 **Note**: If a "**Your connection is not private**" warning pops up on your web browser after accessing `traefik.<your-domain>`, click **Advanced > Proceed** to be directed to the dashboard.
@@ -470,7 +470,7 @@ Verify the issuer by click on the **Not Secure** icon beside the **URL**. Then c
 You should see "**(STAGING) Let's Encrypt**" in the "**Issued By**" section.
 
 <p align="center">
-    <img src="../../images/cert-manager-setup-5.png" alt="Description of image" width="50%">
+    <img src="../../images/cert-manager-setup-5.png" alt="Browser certificate viewer showing a Let's Encrypt staging certificate" width="50%">
 </p>
 
 This means that the configuration works and can now proceed to use Let's Encrypt's production API to sign valid certificates.
@@ -511,7 +511,7 @@ kubectl get certificate -n traefik
 ```
 
 <p align="center">
-    <img src="../../images/cert-manager-setup-6.png" alt="Description of image" width="50%">
+    <img src="../../images/cert-manager-setup-6.png" alt="Terminal showing the letsencrypt-production ClusterIssuer and certificate Ready=True" width="50%">
 </p>
 
 Verify that the production ingress route for traefik dashboard has been applied:
@@ -521,7 +521,7 @@ kubectl get ingressroute -n traefik
 ```
 
 <p align="center">
-    <img src="../../images/cert-manager-setup-7.png" alt="Description of image" width="50%">
+    <img src="../../images/cert-manager-setup-7.png" alt="Terminal listing the Traefik IngressRoute in the traefik namespace" width="50%">
 </p>
 
 Note: Refer to [1.3 Configure Traefik Dashboard](#13-configure-traefik-dashboard) on how to apply the ingress route for traefik's production dashboard, if you haven't.
@@ -555,7 +555,7 @@ On your web browser, enter the same hostname/domain name, `traefik.<your-domain>
 Enter the credentials when prompted and access should be successful.
 
 <p align="center">
-    <img src="../../images/cert-manager-setup-8.png" alt="Description of image" width="50%">
+    <img src="../../images/cert-manager-setup-8.png" alt="Traefik dashboard after the production certificate is issued" width="50%">
 </p>
 
 **Note**: It might take a few minutes or in some cases, hours, for the certificate and connection to be secure. So it is advisable to access the hostname in a private window or different browser.
@@ -567,7 +567,7 @@ The **URL** should not have a **Not Secure** icon on your web browser.
 Click on the **icon beside the url > connection is secure > certificate is valid** to verify the certificate issuer. You should see "**Let's Encrypt**" in the "**Issued By**" section.
 
 <p align="center">
-    <img src="../../images/cert-manager-setup-9.png" alt="Description of image" width="50%">
+    <img src="../../images/cert-manager-setup-9.png" alt="Browser certificate viewer showing the production Let's Encrypt certificate" width="50%">
 </p>
 
 ## Production Best Practices and Troubleshooting

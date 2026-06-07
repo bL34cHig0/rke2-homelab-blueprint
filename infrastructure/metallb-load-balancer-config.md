@@ -46,7 +46,7 @@ Login with the service account on the control plane or designated ingress node v
     ```
 
      <p align="center">
-      <img src="../images/metallb-setup-0.png" alt="Description of image" width="50%">
+      <img src="../images/metallb-setup-0.png" alt="Terminal: kubectl cluster-info for the RKE2 cluster" width="50%">
     </p>
 
 2. Install `curl` and `wget` utilities if not available already on the control plane or designated ingress node:
@@ -90,7 +90,7 @@ Login with the service account on the control plane or designated ingress node v
     ```
 
      <p align="center">
-      <img src="../images/metallb-setup-1.png" alt="Description of image" width="50%">
+      <img src="../images/metallb-setup-1.png" alt="Terminal: fetching the latest MetalLB release tag from GitHub" width="50%">
     </p>
 
 6. Create a directory where the manifest file will be downloaded to:
@@ -140,7 +140,7 @@ Login with the service account on the control plane or designated ingress node v
     ```
 
     <p align="center">
-      <img src="../images/metallb-setup-2.png" alt="Description of image" width="50%">
+      <img src="../images/metallb-setup-2.png" alt="Terminal: MetalLB controller and speaker pods Running" width="50%">
     </p>
 
 11. Use the following commands to list all services and endpoints:
@@ -151,11 +151,11 @@ Login with the service account on the control plane or designated ingress node v
     ```
 
     <p align="center">
-      <img src="../images/metallb-setup-3.png" alt="Description of image" width="50%">
+      <img src="../images/metallb-setup-3.png" alt="Terminal: kubectl get all in the metallb-system namespace" width="50%">
     </p>
 
     <p align="center">
-      <img src="../images/metallb-setup-4.png" alt="Description of image" width="50%">
+      <img src="../images/metallb-setup-4.png" alt="Terminal: kubectl get endpoints in the metallb-system namespace" width="50%">
     </p>
 
     If all steps are followed through, all MetalLB components will be started, but will remain in idle state until all necessary [configurations](https://metallb.universe.tf/configuration/) are completed.
@@ -193,27 +193,27 @@ MetalLB needs a pool of IP addresses to assign to services when it gets such req
    ```
 
    <p align="center">
-      <img src="../images/metallb-setup-5.png" alt="Description of image" width="50%">
+      <img src="../images/metallb-setup-5.png" alt="Terminal: IPAddressPool manifest for the production address pool" width="50%">
     </p>
 
     The IP addresses can be defined by `CIDR`, `range`, and both IPV4 and IPV6 addresses can be assigned. Multiple instances of `IPAddressPool` can also be defined in a single definition.
 
    <p align="center">
-      <img src="../images/metallb-setup-6.png" alt="Description of image" width="50%">
+      <img src="../images/metallb-setup-6.png" alt="Terminal: IPAddressPool with an address range example" width="50%">
     </p>
 
     <p align="center">
-      <img src="../images/metallb-setup-7.png" alt="Description of image" width="50%">
+      <img src="../images/metallb-setup-7.png" alt="Terminal: IPAddressPool with a CIDR address example" width="50%">
     </p>
 
     <p align="center">
-      <img src="../images/metallb-setup-8.png" alt="Description of image" width="50%">
+      <img src="../images/metallb-setup-8.png" alt="Terminal: IPAddressPool with multiple IPv4 and IPv6 address examples" width="50%">
     </p>
 
     Advertisement can also be limited to a specific Pool. In the example below, advertisement is limited to the production pool.
 
    <p align="center">
-      <img src="../images/metallb-setup-9.png" alt="Description of image" width="50%">
+      <img src="../images/metallb-setup-9.png" alt="Terminal: L2Advertisement manifest referencing the address pool" width="50%">
     </p>
 
 2. Apply the configuration using `kubectl` command:
@@ -230,11 +230,11 @@ MetalLB needs a pool of IP addresses to assign to services when it gets such req
     ```
 
     <p align="center">
-      <img src="../images/metallb-setup-10.png" alt="Description of image" width="50%">
+      <img src="../images/metallb-setup-10.png" alt="Terminal: kubectl get ipaddresspools in metallb-system" width="50%">
     </p>
 
     <p align="center">
-      <img src="../images/metallb-setup-11.png" alt="Description of image" width="50%">
+      <img src="../images/metallb-setup-11.png" alt="Terminal: kubectl get l2advertisements in metallb-system" width="50%">
     </p>
    
 4. Get more details using `describe` kubectl command option:
@@ -244,7 +244,7 @@ MetalLB needs a pool of IP addresses to assign to services when it gets such req
     ```
 
     <p align="center">
-      <img src="../images/metallb-setup-12.png" alt="Description of image" width="50%">
+      <img src="../images/metallb-setup-12.png" alt="Terminal: kubectl describe of the production IPAddressPool" width="50%">
     </p>
 
 5. Installation should be successful and ready for use with [Traefik](https://traefik.io/traefik) for ingress access to applications and services.

@@ -243,7 +243,7 @@ Each key is basically a random string that WordPress combines with user password
 </div>
 
  <p align="center">
-      <img src="../../images/wordpress-salts.png" alt="Description of image" width="50%">
+      <img src="../../images/wordpress-salts.png" alt="Example WordPress wp-config.php authentication unique keys and salts" width="50%">
 </p>
 
 #### 3.2 Generate the Wordpress Keys & Salts via Kubernetes Secret

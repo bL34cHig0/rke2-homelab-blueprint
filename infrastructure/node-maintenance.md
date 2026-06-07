@@ -56,11 +56,11 @@ kubectl get pods --all-namespaces -o wide --field-selector spec.nodeName=<node-n
 ```
 
 <p align="center">
-  <img src="../images/node-drain-setup-2.png" alt="Description of image" width="50%">
+  <img src="../images/node-drain-setup-2.png" alt="Terminal: kubectl get nodes listing the RKE2 cluster nodes" width="50%">
 </p>
 
 <p align="center">
-  <img src="../images/node-drain-setup-4.png" alt="Description of image" width="50%">
+  <img src="../images/node-drain-setup-4.png" alt="Terminal: inspecting pods with emptyDir volumes on a worker node" width="50%">
 </p>
 
 ### Step 2: Tell Kubernetes to Drain the Node
@@ -72,7 +72,7 @@ kubectl drain --ignore-daemonsets <node name>
 ```
 
 <p align="center">
-  <img src="../images/node-drain-setup-0.png" alt="Description of image" width="50%">
+  <img src="../images/node-drain-setup-0.png" alt="Terminal: kubectl drain failing on a node with local-storage pods" width="50%">
 </p>
 
 In some cases, the command might not work and throw an error such as "unable to drain node 'rke2-w2' due to error: cannot delete Pods with local storage". This is due to data residing in **emptyDir** volumes on the node you're trying to drain. Therefore, add the `--delete-emptydir-data` switch to override this.
@@ -84,7 +84,7 @@ kubectl drain --ignore-daemonsets <node name> --delete-emptydir-data
 ```
 
 <p align="center">
-  <img src="../images/node-drain-setup-1.png" alt="Description of image" width="50%">
+  <img src="../images/node-drain-setup-1.png" alt="Terminal: kubectl drain evicting pods with --delete-emptydir-data" width="50%">
 </p>
 
 ### Step 3: PodDisruptionBudget Error
@@ -96,7 +96,7 @@ error when evicting pods/"instance-manager-ca7d107121b02651c32389e8b73988ab" -n 
 ```
 
 <p align="center">
-  <img src="../images/node-drain-setup-5.png" alt="Description of image" width="50%">
+  <img src="../images/node-drain-setup-5.png" alt="Terminal: drain blocked by a PodDisruptionBudget" width="50%">
 </p>
 
 Use the command below to identify pods across all namespaces with PodDisruptionBudget:
@@ -108,7 +108,7 @@ kubectl get pdb --all-namespaces
 > Note: if `Allowed Disruptions` is set to `0` for some pods, then eviction will be blocked.
 
 <p align="center">
-  <img src="../images/node-drain-setup-3.png" alt="Description of image" width="50%">
+  <img src="../images/node-drain-setup-3.png" alt="Terminal: kubectl get pdb across all namespaces" width="50%">
 </p>
 
 Then identify which pod on the node you're trying to drain is blocking eviction. In this example, the node to be drained is `rke2-w1`:
@@ -119,7 +119,7 @@ kubectl -n longhorn-system get pod -o wide | grep instance-manager
 ```
 
 <p align="center">
-  <img src="../images/node-drain-setup-6.png" alt="Description of image" width="50%">
+  <img src="../images/node-drain-setup-6.png" alt="Terminal: locating the Longhorn instance-manager pod blocking eviction" width="50%">
 </p>
 
 Once you've identified the pod, check whether that node still hosts active Longhorn engine/replica processes. This is the most important check. 
@@ -137,7 +137,7 @@ kubectl -n longhorn-system get engines.longhorn.io
 If there are any **PVC replicas** on the node that needs to be drained, then this is most likely one of the root cause to why eviction was blocked. In this case, Longhorn instance manager has a PodDisruptionBudget of `1` Minimum Available pod with no disruption allowed, because `Allowed Disruptions` is set to `0`.
 
 <p align="center">
-  <img src="../images/node-drain-setup-7.png" alt="Description of image" width="50%">
+  <img src="../images/node-drain-setup-7.png" alt="Terminal: kubectl get Longhorn replicas per node" width="50%">
 </p>
 
 To rectify this and allow eviction to be successful, check if the PVC(s) on the node that needs to be drained has their replicas set to greater than `1`. If the replica is set to `1`, increase it to `2` and wait for the second (new) PVC replica to be fully rebuilt and healthy on another node.
@@ -153,7 +153,7 @@ kubectl get pvc -A | grep <pvc-name>
 ```
 
 <p align="center">
-  <img src="../images/node-drain-setup-8.png" alt="Description of image" width="50%">
+  <img src="../images/node-drain-setup-8.png" alt="Terminal: finding the PVC bound to a Longhorn volume" width="50%">
 </p>
 
 > Note: In the screenshot above, the affected PVC replica belongs to `Grafana` and it's in the `monitoring` namespace. Repeat the same command for other PVC replicas to identify the namespace and application they belong to.
@@ -163,7 +163,7 @@ Once you've identified the namespace and application the PVC(s) belong to, navig
 > Caveat: Ensure that the new PVC replica is spawned on a different node and the PVC is fully rebuilt and healthy. Lastly, ensure there is ample storage on other nodes the PVC replica might be deployed to, to preclude any errors. 
 
 <p align="center">
-  <img src="../images/node-drain-setup-9.png" alt="Description of image" width="50%">
+  <img src="../images/node-drain-setup-9.png" alt="Longhorn UI Volumes page with the Update Replicas Count action" width="50%">
 </p>
 
 ### Step 4: Use the Production-safe Drain Command
@@ -179,7 +179,7 @@ kubectl drain <node-name> \
 ```
 
 <p align="center">
-  <img src="../images/node-drain-setup-10.png" alt="Description of image" width="50%">
+  <img src="../images/node-drain-setup-10.png" alt="Terminal: production-safe kubectl drain completing on a worker node" width="50%">
 </p>
 
 Verify the status of the node that needs to be drained:
@@ -191,7 +191,7 @@ kubectl get nodes
 > Note: if the status is `Ready,SchedulingDisabled` and the drain command outputs `node/<node-name> drained`, it means the node is successfully drained and all pods deployed on it are evicted.
 
 <p align="center">
-  <img src="../images/node-drain-setup-11.png" alt="Description of image" width="50%">
+  <img src="../images/node-drain-setup-11.png" alt="Terminal: kubectl get nodes showing the worker as SchedulingDisabled" width="50%">
 </p>
 
 ### Step 5: Perform Maintenance on the Drained Node (Removed from Service)
@@ -230,7 +230,7 @@ kubectl get nodes
 ```
 
 <p align="center">
-  <img src="../images/node-drain-setup-12.png" alt="Description of image" width="50%">
+  <img src="../images/node-drain-setup-12.png" alt="Terminal: kubectl uncordon returning the node to service" width="50%">
 </p>
 
 ### Step 7: Apply the Same Steps to Other Nodes

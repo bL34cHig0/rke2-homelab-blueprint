@@ -70,19 +70,19 @@ This section outlines a repeatable process for provisioning Ubuntu 24.04 servers
     Note: Use passbolt or other password managers to generate and store the passphrase (>= 18 characters) securely.
 
 <p align="center">
-  <img src="../images/ssh-setup-0.png" alt="Description of image" width="50%">
+  <img src="../images/ssh-setup-0.png" alt="Terminal generating an ed25519 SSH key pair with ssh-keygen" width="50%">
 </p>
 
 2. Log in to the Hetzner Cloud Console and navigate to `Security → SSH Keys` on the left panel. Click `Add SSH key` and paste the contents of your public key (~/.ssh/<id_name>.pub) - this is     generated in your `.ssh` directory from `step 1`.
 
 <p align="center">
-  <img src="../images/ssh-setup-1.png" alt="Description of image" width="50%">
+  <img src="../images/ssh-setup-1.png" alt="Hetzner Cloud console SSH keys list (names and fingerprints redacted)" width="50%">
 </p>
 
 3. Give it a name and click `Add SSH key` to save it.
 
 <p align="center">
-  <img src="../images/ssh-setup-2.png" alt="Description of image" width="50%">
+  <img src="../images/ssh-setup-2.png" alt="Hetzner Cloud console Add SSH key dialog" width="50%">
 </p>
 
 ### Create a New Server & Private Network for Control plane
@@ -90,55 +90,55 @@ This section outlines a repeatable process for provisioning Ubuntu 24.04 servers
 1. On Hetzner cloud console, go to `Servers → Add Server`. Select `Cost-Optimized` as the `Type`, `x86 Intel/AMD` as the architecture, and choose a resource category below it.
 
 <p align="center">
-  <img src="../images/srv-setup-1.png" alt="Description of image" width="50%">
+  <img src="../images/srv-setup-1.png" alt="Hetzner Cloud Create a server page selecting the server type" width="50%">
 </p>
 
 2. Select a location (preferably close to your users or other infrastructure) and choose `Ubuntu 24.04` as the image.
 
 <p align="center">
-  <img src="../images/srv-setup-2.png" alt="Description of image" width="50%">
+  <img src="../images/srv-setup-2.png" alt="Hetzner Cloud server creation selecting location and the Ubuntu 24.04 image" width="50%">
 </p>
 
 3. For Networking, check `Public IPv4`, `Public IPv6`, and `Private Networks`.
 
 <p align="center">
-  <img src="../images/srv-setup-4.png" alt="Description of image" width="50%">
+  <img src="../images/srv-setup-4.png" alt="Hetzner Cloud server networking options for public and private networks" width="50%">
 </p>
 
 4. Then create a private network in a `/16` subnet by clicking `Create network` and give it a name.
 
 <p align="center">
-  <img src="../images/srv-setup-3.png" alt="Description of image" width="50%">
+  <img src="../images/srv-setup-3.png" alt="Hetzner Cloud Create network dialog for rke2-private-network (10.0.0.0/16)" width="50%">
 </p>
 
 5. Attach your uploaded SSH key by selecting it.
 
 <p align="center">
-  <img src="../images/srv-setup-5.png" alt="Description of image" width="50%">
+  <img src="../images/srv-setup-5.png" alt="Hetzner Cloud server creation SSH keys selection" width="50%">
 </p>
 
 6. Navigate to `Firewalls → Create Firewall` on the left panel. Give it a name and click `Create Firewall`.
 
 <p align="center">
-  <img src="../images/srv-setup-6.png" alt="Description of image" width="50%">
+  <img src="../images/srv-setup-6.png" alt="Hetzner Cloud firewall creation naming the rke2-srv-firewall" width="50%">
 </p>
 
 7. Add the following rules below to the newly created firewall appliance. Change port `2222` to `22` in the meantime. This will enable you to ssh into the server. After a service acount/user has been created on the server, with modifications to `ssh` config file, change the port number back to `2222`. See step 10 in [Disable Root Access & Change SSH Port Number](#disable-root-access--change-ssh-port-number) section.
 
 <p align="center">
-  <img src="../images/srv-setup-8.png" alt="Description of image" width="50%">
+  <img src="../images/srv-setup-8.png" alt="Hetzner Cloud firewall inbound rules (TCP 2222, ICMP, 80, 443)" width="50%">
 </p>
 
 8. Then attach the firewall to the server.
 
 <p align="center">
-  <img src="../images/srv-setup-7.png" alt="Description of image" width="50%">
+  <img src="../images/srv-setup-7.png" alt="Hetzner Cloud firewalls overview showing the rke2-srv-firewall" width="50%">
 </p>
 
 9. Assign a hostname to the server and ensure the configurations above are applied correctly. Then click `Create & Buy now`
 
 <p align="center">
-  <img src="../images/srv-setup-9.png" alt="Description of image" width="50%">
+  <img src="../images/srv-setup-9.png" alt="Hetzner Cloud server creation cloud-config and naming the control plane rke2-c1" width="50%">
 </p>
 
 ### Create a New Server for Worker Nodes
@@ -149,7 +149,7 @@ Repeat the same steps in [Create a New Server & Private Network for Control plan
 1. For step `3`, check only `Private Networks` and attach the same private network created in step `4`. Do not check `Public IPv4` and `Public IPv6` for the worker node server. See [Network Addressing Model and Security Rationale](#network-addressing-model-and-security-rationale) section for more details as to why.
 
 <p align="center">
-  <img src="../images/srv-setup-10.png" alt="Description of image" width="50%">
+  <img src="../images/srv-setup-10.png" alt="Hetzner Cloud server networking with rke2-private-network selected" width="50%">
 </p>
 
 2. Worker node server(s) do not require hetzner firewall since they are not publicly accessible.
@@ -284,7 +284,7 @@ The service account username can be `devops` for example.
     ```
 
     <p align="center">
-      <img src="../images/ssh-setup-8.png" alt="Description of image" width="50%">
+      <img src="../images/ssh-setup-8.png" alt="Terminal editing /etc/ssh/sshd_config in nano" width="50%">
     </p>
    
 9. Reload and restart the socket daemon for the effect to take place:
