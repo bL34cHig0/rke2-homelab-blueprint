@@ -34,7 +34,7 @@ This approach preserves network isolation, reduces the exposed attack surface, a
 2. Switch to the root user and change to the root user's ssh directory - `/root/.ssh`:
 
     ```
-    sudo su
+    sudo -i
     cd /root/.ssh or cd ~/.ssh
     ```
 3. Copy the private key attached to the worker server during provisioning, from your local PC (external client) to `/root/.ssh`:
@@ -48,7 +48,7 @@ This approach preserves network isolation, reduces the exposed attack surface, a
      chmod 0600 <private-key>
 
      # manual method
-     sudo su
+     sudo -i
      cd ~/.ssh
      nano <file-name>
      Ctrl + Shift + V to copy the private key

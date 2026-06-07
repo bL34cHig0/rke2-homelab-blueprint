@@ -37,7 +37,7 @@ MetalLB requires the following to function:
 
 ## Installation Steps
 
-Login with the service account on the control plane or designated ingress node via `ssh`. Switch to the root user - `sudo su` then `cd ~`.
+Login with the service account on the control plane or designated ingress node via `ssh`. Switch to the root user - `sudo -i`.
 
 1. Verify that the Kubernetes cluster API is responsive and that you can use the `kubectl` command-line tool for cluster administration:
 

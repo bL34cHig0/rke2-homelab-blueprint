@@ -73,7 +73,7 @@
 
 ## Configuration Steps
 
-Login with the service account on the control plane or designated ingress node via `ssh`. Switch to the root user - `sudo su` then `cd ~`.
+Login with the service account on the control plane or designated ingress node via `ssh`. Switch to the root user - `sudo -i`.
 
 Download the repo on the control plane and navigate to `traefik` directory to deploy `traefik`. Use `git clone` or the `Download Zip` button to download the repo.
 

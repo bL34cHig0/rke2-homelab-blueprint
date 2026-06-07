@@ -59,7 +59,7 @@ To scale MariaDB horizontally, you must set up **Galera Cluster** (multi-primary
 
 ## Configuration Steps
 
-Login with the service account on the control plane via `ssh`. Switch to the root user - `sudo su` then `cd ~`.
+Login with the service account on the control plane via `ssh`. Switch to the root user - `sudo -i`.
 
 Download the repo on the control plane if you haven't, and navigate to `wordpress` directory to deploy `wordpress`. Use `git clone` or the `Download Zip` button to download the repo.
 
@@ -124,8 +124,7 @@ Switch to the **root** user and create a `wordpress` namespace to deploy `wordpr
 
 ```
 # switch to root user
-sudo su
-cd ~
+sudo -i
 
 # clone the repo to the root user's home directory (~) and change to wordpress directory
 git clone <repo-url>

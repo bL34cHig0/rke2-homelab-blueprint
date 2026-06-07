@@ -69,7 +69,7 @@ This is the recommended pattern when you already run an ingress controller in fr
 
 ## Prerequisites
 
-Login with the service account on the control plane via `ssh`. Switch to the root user — `sudo su` then `cd ~`.
+Login with the service account on the control plane via `ssh`. Switch to the root user — `sudo -i`.
 
 Download the repo on the control plane and navigate to the `rancher` directory. Use `git clone` or the `Download Zip` button to download the repo.
 
@@ -108,8 +108,7 @@ You will also need:
 
 ```bash
 # switch to root user
-sudo su
-cd ~
+sudo -i
 
 # clone the repo and change to the rancher directory
 git clone <repo-url>
