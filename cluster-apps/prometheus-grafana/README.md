@@ -63,6 +63,8 @@ Alertmanager (routing, grouping, inhibition)
 
 Grafana is not exposed externally to reduce the attack surface. Alerting flows through Alertmanager and Discord instead.
 
+To open the Grafana dashboard without exposing it publicly, reach it through the **Rancher dashboard → Service Discovery → Services**: select the cluster, open the `monitoring` namespace, find the `prometheus-grafana` Service, and use its **HTTP** port link to open the UI proxied through your authenticated Rancher session. (Equivalently, `kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80` and browse to `http://localhost:3000`.)
+
 ## Files
 
 | File | Description |
