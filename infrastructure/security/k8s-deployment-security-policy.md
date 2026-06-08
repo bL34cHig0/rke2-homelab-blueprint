@@ -561,15 +561,16 @@ ports:
         - "2c0f:f248::/32"
 ```
 
-**2. Update rate limit middleware to use `ipStrategy`**
+**2. Update rate limit middleware to key on `CF-Connecting-IP`**
 
-Add `sourceCriterion.ipStrategy.depth: 1` in the rate-limit middleware. This reads the rightmost untrusted IP from the `X-Forwarded-For` chain — the real client IP that Cloudflare recorded.
+Set `sourceCriterion.requestHeaderName: Cf-Connecting-Ip` in the rate-limit middleware. Cloudflare sets this header to the single real client IP on every proxied request.
 
 ```yaml
 sourceCriterion:
-  ipStrategy:
-    depth: 1
+  requestHeaderName: Cf-Connecting-Ip
 ```
+
+> Do **not** use `ipStrategy.depth: 1` behind Cloudflare — the depth strategy can resolve to a rotating Cloudflare edge IP rather than the client, scattering a single client across rate-limit buckets so the limit never trips. This also requires `externalTrafficPolicy: Local` on the Traefik Service (the chart 39.x ignores the value, so patch it: `kubectl patch svc traefik -n <ns> -p '{"spec":{"externalTrafficPolicy":"Local"}}'`).
 
 **3. Restrict origin traffic to Cloudflare only**
 
@@ -608,7 +609,7 @@ spec:
       - "2c0f:f248::/32"
 ```
 
-**Why this is safe but Section 7.7's default isn't:** In the default setup (no Cloudflare proxy), clients connect directly to Traefik. An attacker can set a fake `X-Forwarded-For` header and `ipStrategy` would trust it — allowing rate-limit bypass. With Cloudflare proxy, control 1 makes Traefik only trust `X-Forwarded-For` from Cloudflare's IP ranges, Cloudflare overwrites the header with the actual connecting client IP, and control 3 guarantees that non-Cloudflare traffic never reaches Traefik.
+**Why this is safe but Section 7.7's default isn't:** In the default setup (no Cloudflare proxy), clients connect directly to Traefik. An attacker can set a fake `CF-Connecting-IP`/`X-Forwarded-For` header and Traefik would trust it — allowing rate-limit bypass. With Cloudflare proxy, control 1 makes Traefik only trust forwarded headers from Cloudflare's IP ranges, Cloudflare sets `CF-Connecting-IP` to the actual connecting client IP, and control 3 guarantees that non-Cloudflare traffic never reaches Traefik.
 
 **IP range maintenance:** Cloudflare publishes its IP ranges at https://www.cloudflare.com/ips-v4/ and https://www.cloudflare.com/ips-v6/. These ranges change infrequently but do change. Three locations need to stay in sync: `forwardedHeaders.trustedIPs` (Helm values), `ipAllowList.sourceRange` (every `cloudflare-only` middleware), and any host or upstream firewall allowlists. A range in the allowlist but missing from `trustedIPs` will allow traffic through but rate-limit it by Cloudflare's IP. A range in `trustedIPs` but missing from the allowlist will reject legitimate traffic with 403.
 

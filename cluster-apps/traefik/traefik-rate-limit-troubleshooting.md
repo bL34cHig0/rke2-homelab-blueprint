@@ -146,9 +146,13 @@ kubectl get nodes
 
 ### Helm upgrade does not apply externalTrafficPolicy
 
-**Symptom:** The Traefik Helm values.yaml has `externalTrafficPolicy: Local` but the live service shows `Cluster` after `helm upgrade`.
+**Symptom:** The Traefik Helm values.yaml has `externalTrafficPolicy: Local` but the live service shows `Cluster` after `helm upgrade` (or after a fresh install).
 
-**Cause:** Helm may not update immutable or already-set fields on existing Services. This is a known issue with Helm's three-way merge strategy for Services.
+**Cause:** Two distinct failure modes:
+1. **The chart never templates the value (chart v36+ / 39.x).** `service.externalTrafficPolicy` is accepted in values but is **not** rendered into the Service at all — so the Service is born `Cluster` even on a clean install. Verify with `helm get manifest traefik -n traefik | grep -i externaltraffic` (returns nothing) while `helm get values traefik -n traefik` shows your `Local`. A patch (below) is the reliable, version-independent fix.
+2. **Helm won't update an existing Service's field.** Even when rendered, Helm's three-way merge may not update an already-set `externalTrafficPolicy` on a live Service.
+
+Either way the symptom is the same: `Cluster`, SNAT, no real client IP.
 
 **Fix:** Patch the service manually after the Helm upgrade:
 
@@ -251,8 +255,8 @@ The `sourceCriterion` field in Traefik v3 rate limit middleware has three mutual
 |-------|----------|----------|
 | `requestHost: true` | Groups all requests by the `Host` header value. All visitors to the same domain share one bucket. | **Default when `sourceCriterion` is omitted.** Almost never what you want for per-client rate limiting. |
 | `requestHost: false` | Uses the TCP remote address (direct connection IP) as the rate limit key. | **Recommended for direct traffic** (no reverse proxy in front of Traefik). Requires `externalTrafficPolicy: Local` to see real client IPs. |
-| `ipStrategy.depth: N` | Reads the Nth IP from the `X-Forwarded-For` header (0 = first/leftmost). | **Required when behind Cloudflare** or another trusted reverse proxy. Must be combined with `forwardedHeaders.trustedIPs` to prevent spoofing. |
-| `requestHeaderName: "Header-Name"` | Groups requests by the value of the specified header. | Niche use cases (e.g., rate limit by API key header). |
+| `ipStrategy.depth: N` | Reads the Nth IP from the `X-Forwarded-For` header (0 = first/leftmost). | Generic trusted reverse proxies. **Avoid behind Cloudflare** — depth can resolve to a *rotating* CF edge IP and scatter one client across buckets so the limit never trips; use `requestHeaderName: Cf-Connecting-Ip` instead. Must be combined with `forwardedHeaders.trustedIPs`. |
+| `requestHeaderName: "Header-Name"` | Groups requests by the value of the specified header. | **Recommended behind Cloudflare:** `requestHeaderName: Cf-Connecting-Ip` — the single real client IP Cloudflare sets on every request. Also API-key-style limiting. |
 
 ### Common pitfalls
 
