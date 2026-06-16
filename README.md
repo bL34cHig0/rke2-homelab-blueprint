@@ -1,4 +1,4 @@
-# RKE2 Cluster Blueprint
+# RKE2 Homelab Kubernetes Blueprint
 
 [![License: Apache 2.0](https://img.shields.io/github/license/bL34cHig0/rke2-homelab-blueprint?color=blue)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/bL34cHig0/rke2-homelab-blueprint)](https://github.com/bL34cHig0/rke2-homelab-blueprint/stargazers)
@@ -19,13 +19,13 @@ This repository is a starting point — every domain, email, namespace and organ
 
 ## Highlights
 
-- 🔒 **Security-first by default** — CIS Benchmark hardening, restricted Pod Security, dropped Linux capabilities, read-only root filesystems, and dedicated ServiceAccounts with token automount disabled.
-- 🌐 **Production-grade ingress** — Traefik v3 + cert-manager wildcard TLS via Let's Encrypt DNS-01 (Cloudflare), default security headers, and rate limiting.
-- 🧱 **NetworkPolicy microsegmentation** — per-workload network isolation, plus a NAT-egress and CrowdSec/firewall posture for the host layer.
-- 📦 **Batteries included** — Rancher (cluster management), Longhorn (encrypted block storage), MetalLB (bare-metal load balancing), and Prometheus/Grafana with Alertmanager → Discord alerting.
-- 🛠️ **Real, working manifests** — not skeletons. A hardened WordPress + MariaDB reference workload to model new apps on.
-- 📚 **Step-by-step docs** — OS prep, RKE2 install, CIS hardening, networking, node maintenance — each decision explained.
-- ☁️ **Cheap to run** — ~€15/month on a 3-node Hetzner cluster; works on any KVM VPS or bare metal.
+- **Security-first by default** — CIS Benchmark hardening, restricted Pod Security, dropped Linux capabilities, read-only root filesystems, and dedicated ServiceAccounts with token automount disabled.
+- **Production-grade ingress** — Traefik v3 + cert-manager wildcard TLS via Let's Encrypt DNS-01 (Cloudflare), default security headers, and rate limiting.
+- **NetworkPolicy microsegmentation** — per-workload network isolation, plus a NAT-egress and CrowdSec/firewall posture for the host layer.
+- **Batteries included** — Rancher (cluster management), Longhorn (encrypted block storage), MetalLB (bare-metal load balancing), and Prometheus/Grafana with Alertmanager → Discord alerting.
+- **Real, working manifests** — not skeletons. A hardened WordPress + MariaDB reference workload to model new apps on.
+- **Step-by-step docs** — OS prep, RKE2 install, CIS hardening, networking, node maintenance — each decision explained.
+- **Cheap to run** — ~€15/month on a 3-node Hetzner cluster; works on any KVM VPS or bare metal.
 
 ## Table of Contents
 
